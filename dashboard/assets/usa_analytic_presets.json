@@ -1,0 +1,130 @@
+{
+  "country": "World",
+  "default_preset_id": "world_period_2024_both_hazard",
+  "presets": [
+    {
+      "id": "italy_period_2024_both_hazard",
+      "label": "Italy 2024 Hazard Fit",
+      "country": "Italy",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5373476852708058,
+        "beta": 54.75,
+        "epsilon": 35.095532498869574,
+        "Xc": 17.0
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 380,
+      "h_ext": 9.04553028923465e-05,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.1492955601489403."
+    },
+    {
+      "id": "south_africa_period_2024_both_hazard",
+      "label": "South Africa 2024 Hazard Fit",
+      "country": "South Africa",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5880144636493677,
+        "beta": 66.40101264151157,
+        "epsilon": 95.05663911859621,
+        "Xc": 20.81384821901318
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 710,
+      "h_ext": 0.0005507318623590765,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.10568521994843812."
+    },
+    {
+      "id": "uganda_period_2024_both_hazard",
+      "label": "Uganda 2024 Hazard Fit",
+      "country": "Uganda",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5373476852708058,
+        "beta": 54.75,
+        "epsilon": 51.83,
+        "Xc": 17.0
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 800,
+      "h_ext": 0.0010243893036786399,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.08304461545371633."
+    },
+    {
+      "id": "usa_period_2019_both_hazard",
+      "label": "USA 2019 Hazard Fit",
+      "country": "USA",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2019,
+      "fit_target": "hazard",
+      "source": "Direct SRFitter hazard fit on 2026-03-31",
+      "params": {
+        "eta": 0.43858182758384656,
+        "beta": 41.86849757284421,
+        "epsilon": 37.51256801824486,
+        "Xc": 23.096526094453885
+      },
+      "age_start": 40,
+      "age_end": 95,
+      "notes": "Fitted eta, beta, epsilon, and mean Xc with fixed kappa=0.5 and fixed h_ext=0.0. Xc heterogeneity is Gaussian with std=0.2*Xc_mean. Used lx weighting with a late-robust hazard objective."
+    },
+    {
+      "id": "usa_period_2024_both_hazard",
+      "label": "USA 2024 Hazard Fit",
+      "country": "USA",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5381235490098706,
+        "beta": 56.002966428670156,
+        "epsilon": 52.06264843109282,
+        "Xc": 19.31477878828924
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 840,
+      "h_ext": 0.00012390528181655197,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.21013992970292059."
+    },
+    {
+      "id": "world_period_2024_both_hazard",
+      "label": "World 2024 Hazard Fit",
+      "country": "World",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5373476852708058,
+        "beta": 54.75,
+        "epsilon": 41.73585695246492,
+        "Xc": 17.0
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 900,
+      "h_ext": 0.001210575607801238,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.06785300779948743."
+    }
+  ]
+}

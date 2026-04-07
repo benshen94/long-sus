@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>World Analytic Longevity Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20260407b">
+    <script src="./vendor/plotly-2.35.2.min.js"></script>
+  </head>
+  <body>
+    <div class="page-shell" data-page-shell>
+      <aside class="control-rail">
+        <div class="rail-intro">
+          <p class="eyebrow">World analytic default</p>
+          <h1>Longevity intervention dashboard</h1>
+          <p class="rail-copy">
+            The default viewer uses world WPP demography and analytic hazard multipliers from the
+            baseline-fit catalog. Different intervention plans still mix by treatment start age.
+          </p>
+          <div class="status-row">
+            <span class="status-chip" id="load-status">Loading</span>
+          </div>
+          <div class="branch-toggle" aria-label="Intervention branch">
+            <button type="button" class="branch-pill is-active">Analytic arm</button>
+            <button type="button" class="branch-pill" disabled>Simulation</button>
+          </div>
+          <p class="rule-note">The simulation branch stays in the codebase, but this viewer is analytic-only for now.</p>
+          <p class="load-error" id="load-error" hidden></p>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <p class="eyebrow">Active scenario</p>
+            <h2>Build the run</h2>
+          </div>
+
+          <label class="field">
+            <span class="field-head">
+              <span>Uptake mode</span>
+              <button
+                type="button"
+                class="info-button"
+                id="uptake-mode-info-toggle"
+                aria-expanded="false"
+                aria-controls="uptake-mode-help"
+              >i</button>
+            </span>
+            <p class="rule-note inline-help" id="uptake-mode-help" hidden></p>
+            <select id="uptake-mode">
+              <option value="threshold">Threshold</option>
+              <option value="banded">Banded</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-head">
+              <span>Intervention plan</span>
+              <button
+                type="button"
+                class="info-button"
+                id="preset-info-toggle"
+                aria-expanded="false"
+                aria-controls="preset-help"
+              >i</button>
+            </span>
+            <p class="rule-note inline-help" id="preset-help" hidden></p>
+            <select id="preset-select"></select>
+          </label>
+
+          <label class="field" hidden>
+            <span>Branch</span>
+            <select id="branch-select"></select>
+          </label>
+
+          <label class="field">
+            <span>Target</span>
+            <select id="target-select"></select>
+          </label>
+
+          <label class="field" id="factor-select-field" hidden>
+            <span>Factor</span>
+            <select id="factor-select"></select>
+          </label>
+
+          <label class="field" id="factor-input-field">
+            <span>Factor</span>
+            <input id="factor-input" type="number" min="0.01" step="0.01" value="0.80">
+          </label>
+
+          <label class="field" id="hetero-field" hidden>
+            <span>Baseline preset</span>
+            <select id="hetero-mode"></select>
+          </label>
+
+          <label class="field" id="analytic-preset-field">
+            <span>Hazard-fit preset</span>
+            <select id="analytic-preset-select"></select>
+          </label>
+
+          <label class="field">
+            <span>Launch year</span>
+            <select id="launch-year"></select>
+          </label>
+
+          <label class="field">
+            <span>Projection end year</span>
+            <select id="projection-end-year"></select>
+          </label>
+
+          <label class="field" id="threshold-field">
+            <span>Threshold age</span>
+            <input id="threshold-age" type="number" min="0" max="100" value="60">
+          </label>
+
+          <label class="field" id="start-rule-field">
+            <span>Start rule inside band</span>
+            <select id="start-rule">
+              <option value="absolute">Absolute</option>
+              <option value="equal_probabilities">Equal probabilities</option>
+              <option value="uniform_start_age">Uniform start age</option>
+            </select>
+          </label>
+
+          <div class="rule-panel" id="band-editor">
+            <p class="field-label">Band editor</p>
+            <div class="band-input-grid">
+              <label class="band-input">
+                <span>20-39</span>
+                <input id="band-20-39" type="number" min="0" max="100" step="1" value="35">
+              </label>
+              <label class="band-input">
+                <span>40-64</span>
+                <input id="band-40-64" type="number" min="0" max="100" step="1" value="65">
+              </label>
+              <label class="band-input">
+                <span>65+</span>
+                <input id="band-65-plus" type="number" min="0" max="100" step="1" value="95">
+              </label>
+            </div>
+            <p class="rule-note" id="scheme-explainer"></p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <p class="eyebrow">Comparison</p>
+            <h2>Second run</h2>
+          </div>
+
+          <div class="action-stack compact">
+            <button id="compare-to-vanilla" type="button" class="ghost">Compare Against Vanilla</button>
+          </div>
+
+          <label class="field">
+            <span>Comparison preset</span>
+            <select id="compare-preset-select"></select>
+          </label>
+
+          <label class="field" hidden>
+            <span>Comparison branch</span>
+            <select id="compare-branch-select"></select>
+          </label>
+
+          <label class="field">
+            <span>Comparison target</span>
+            <select id="compare-target-select"></select>
+          </label>
+
+          <label class="field" id="compare-factor-select-field" hidden>
+            <span>Comparison factor</span>
+            <select id="compare-factor-select"></select>
+          </label>
+
+          <label class="field" id="compare-factor-input-field">
+            <span>Comparison factor</span>
+            <input id="compare-factor-input" type="number" min="0.01" step="0.01" value="1.00">
+          </label>
+
+          <label class="field" id="compare-hetero-field" hidden>
+            <span>Comparison baseline</span>
+            <select id="compare-hetero-mode"></select>
+          </label>
+
+          <label class="field" id="compare-analytic-preset-field">
+            <span>Comparison hazard-fit preset</span>
+            <select id="compare-analytic-preset-select"></select>
+          </label>
+
+          <p class="rule-note" id="compare-explainer"></p>
+        </section>
+
+        <section class="panel action-panel">
+          <div class="panel-head">
+            <p class="eyebrow">Exports</p>
+            <h2>Take the data out</h2>
+          </div>
+
+          <div class="action-stack">
+            <button id="export-scenario-csv" type="button">Export population CSV</button>
+            <button id="export-summary-csv" type="button">Export summary CSV</button>
+            <button id="export-pyramid-image" type="button">Export current pyramid</button>
+            <button id="reset-scenario" type="button" class="ghost">Reset defaults</button>
+          </div>
+        </section>
+      </aside>
+
+      <main class="main-stage">
+        <header class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Interactive validation</p>
+            <h2>Who starts treatment, when they start, and which parameter moves all matter.</h2>
+            <p>
+              The browser runs the yearly projection directly from world demography plus the analytic
+              hazard formulas. Different intervention plans still mix by treatment start age.
+            </p>
+          </div>
+          <div class="hero-metrics" id="hero-metrics"></div>
+        </header>
+
+        <section class="timeline-bar">
+          <div class="timeline-copy">
+            <p class="eyebrow">Pyramid year</p>
+            <strong id="year-label">2075</strong>
+          </div>
+          <input id="year-slider" type="range" min="2024" max="2100" value="2075">
+        </section>
+
+        <section class="pyramid-grid">
+          <article class="plot-frame">
+            <div class="plot-header">
+              <p class="eyebrow">Active scenario</p>
+              <h3 id="active-scenario-label">Loading</h3>
+            </div>
+            <div class="plot-surface" id="pyramid-chart"></div>
+          </article>
+
+          <article class="plot-frame compare-frame">
+            <div class="plot-header">
+              <p class="eyebrow">Comparison scenario</p>
+              <h3 id="compare-scenario-label">Loading</h3>
+            </div>
+            <div class="plot-surface" id="compare-pyramid-chart"></div>
+          </article>
+        </section>
+
+        <section class="analysis-grid">
+          <article class="plot-frame">
+            <div class="plot-header">
+              <p class="eyebrow">Trajectory</p>
+              <h3>Total population</h3>
+            </div>
+            <div class="plot-surface" id="total-population-chart"></div>
+          </article>
+
+          <article class="plot-frame">
+            <div class="plot-header">
+              <p class="eyebrow">Aging</p>
+              <h3>Share age 65+</h3>
+            </div>
+            <div class="plot-surface" id="old-age-share-chart"></div>
+          </article>
+
+          <article class="plot-frame wide">
+            <div class="plot-header">
+              <p class="eyebrow">Timing</p>
+              <h3>Treated share heatmap</h3>
+              <p class="plot-note">
+                Each cell is the treated share for one age in one year. A solid block means those ages
+                were already eligible at launch. A diagonal edge means later cohorts age into eligibility.
+              </p>
+            </div>
+            <div class="plot-surface" id="treated-heatmap-chart"></div>
+          </article>
+
+          <article class="plot-frame wide">
+            <div class="plot-header">
+              <p class="eyebrow">SR cohort view</p>
+              <h3>Survival curves</h3>
+            </div>
+            <div class="plot-surface" id="survival-chart"></div>
+          </article>
+
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./app.mjs?v=20260407b"></script>
+  </body>
+</html>

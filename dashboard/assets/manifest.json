@@ -1,0 +1,44 @@
+{
+  "title": "World Analytic Longevity Dashboard",
+  "country": "World",
+  "country_label": "World",
+  "branch_options": [
+    "analytic_arm"
+  ],
+  "default_branch": "analytic_arm",
+  "default_target": "eta",
+  "default_eta_factor": 0.8,
+  "default_xc_factor": 1.1,
+  "default_analytic_preset_id": "world_period_2024_both_hazard",
+  "default_launch_year": 2025,
+  "default_projection_end_year": 2100,
+  "default_preset_id": "threshold_age_60_all_eligible",
+  "default_compare_preset_id": "no_one",
+  "target_options": [
+    "eta",
+    "Xc"
+  ],
+  "factor_grids": {
+    "eta": [
+      1.0,
+      0.95,
+      0.9,
+      0.85,
+      0.8,
+      0.75,
+      0.7
+    ],
+    "Xc": [
+      1.0,
+      1.1,
+      1.2
+    ]
+  },
+  "paths": {
+    "demography": "./usa_demography.json",
+    "sr_interventions_root": "./interventions/sr",
+    "analytic_presets": "./usa_analytic_presets.json",
+    "calibration": "./usa_calibration.json",
+    "scenario_catalog": "./usa_validation_scenarios.json"
+  }
+}

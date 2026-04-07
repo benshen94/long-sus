@@ -1,0 +1,211 @@
+{
+  "country": "World",
+  "branch_options": [
+    "analytic_arm"
+  ],
+  "target_options": [
+    "eta",
+    "Xc"
+  ],
+  "factor_grids": {
+    "eta": [
+      1.0,
+      0.95,
+      0.9,
+      0.85,
+      0.8,
+      0.75,
+      0.7
+    ],
+    "Xc": [
+      1.0,
+      1.1,
+      1.2
+    ]
+  },
+  "default_branch": "analytic_arm",
+  "default_target": "eta",
+  "default_eta_factor": 0.8,
+  "default_xc_factor": 1.1,
+  "default_analytic_preset_id": "world_period_2024_both_hazard",
+  "launch_year": 2025,
+  "projection_end_year": 2100,
+  "default_threshold_age": 60,
+  "default_start_rule": "absolute",
+  "default_bands": [
+    {
+      "start_age": 20,
+      "end_age": 39,
+      "target_share": 0.35
+    },
+    {
+      "start_age": 40,
+      "end_age": 64,
+      "target_share": 0.65
+    },
+    {
+      "start_age": 65,
+      "end_age": null,
+      "target_share": 0.95
+    }
+  ],
+  "presets": [
+    {
+      "id": "no_one",
+      "label": "No one",
+      "uptake_mode": "threshold",
+      "threshold_age": null,
+      "start_rule_within_band": "absolute",
+      "bands": []
+    },
+    {
+      "id": "everyone",
+      "label": "Everyone",
+      "uptake_mode": "threshold",
+      "threshold_age": 0,
+      "start_rule_within_band": "deterministic_threshold",
+      "bands": []
+    },
+    {
+      "id": "only_elderly_65plus",
+      "label": "Only elderly (65+)",
+      "uptake_mode": "banded",
+      "threshold_age": null,
+      "start_rule_within_band": "absolute",
+      "bands": [
+        {
+          "start_age": 65,
+          "end_age": null,
+          "target_share": 1.0
+        }
+      ]
+    },
+    {
+      "id": "50pct_elderly_65plus",
+      "label": "50% of elderly (65+)",
+      "uptake_mode": "banded",
+      "threshold_age": null,
+      "start_rule_within_band": "absolute",
+      "bands": [
+        {
+          "start_age": 65,
+          "end_age": null,
+          "target_share": 0.5
+        }
+      ]
+    },
+    {
+      "id": "30pct_middle_40_64_plus_70pct_elderly_65plus",
+      "label": "30% middle age, 70% elderly",
+      "uptake_mode": "banded",
+      "threshold_age": null,
+      "start_rule_within_band": "absolute",
+      "bands": [
+        {
+          "start_age": 40,
+          "end_age": 64,
+          "target_share": 0.3
+        },
+        {
+          "start_age": 65,
+          "end_age": null,
+          "target_share": 0.7
+        }
+      ]
+    },
+    {
+      "id": "half_population_adult_band",
+      "label": "Half of adult population",
+      "uptake_mode": "banded",
+      "threshold_age": null,
+      "start_rule_within_band": "absolute",
+      "bands": [
+        {
+          "start_age": 20,
+          "end_age": null,
+          "target_share": 0.5
+        }
+      ]
+    },
+    {
+      "id": "prescription_bands_absolute",
+      "label": "Prescription bands / absolute",
+      "uptake_mode": "banded",
+      "threshold_age": null,
+      "start_rule_within_band": "absolute",
+      "bands": [
+        {
+          "start_age": 20,
+          "end_age": 39,
+          "target_share": 0.35
+        },
+        {
+          "start_age": 40,
+          "end_age": 64,
+          "target_share": 0.65
+        },
+        {
+          "start_age": 65,
+          "end_age": null,
+          "target_share": 0.95
+        }
+      ]
+    },
+    {
+      "id": "prescription_bands_equal_probabilities",
+      "label": "Prescription bands / equal probabilities",
+      "uptake_mode": "banded",
+      "threshold_age": null,
+      "start_rule_within_band": "equal_probabilities",
+      "bands": [
+        {
+          "start_age": 20,
+          "end_age": 39,
+          "target_share": 0.35
+        },
+        {
+          "start_age": 40,
+          "end_age": 64,
+          "target_share": 0.65
+        },
+        {
+          "start_age": 65,
+          "end_age": null,
+          "target_share": 0.95
+        }
+      ]
+    },
+    {
+      "id": "prescription_bands_uniform_start_age",
+      "label": "Prescription bands / uniform start age",
+      "uptake_mode": "banded",
+      "threshold_age": null,
+      "start_rule_within_band": "uniform_start_age",
+      "bands": [
+        {
+          "start_age": 20,
+          "end_age": 39,
+          "target_share": 0.35
+        },
+        {
+          "start_age": 40,
+          "end_age": 64,
+          "target_share": 0.65
+        },
+        {
+          "start_age": 65,
+          "end_age": null,
+          "target_share": 0.95
+        }
+      ]
+    },
+    {
+      "id": "threshold_age_60_all_eligible",
+      "label": "Threshold age 60",
+      "uptake_mode": "threshold",
+      "threshold_age": 60,
+      "start_rule_within_band": "deterministic_threshold",
+      "bands": []
+    }
+  ]
+}
