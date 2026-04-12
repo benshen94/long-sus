@@ -910,7 +910,8 @@ code {
 
 @media (max-width: 720px) {
   .page-shell {
-    padding: 0.8rem;
+    gap: 0.85rem;
+    padding: 0.7rem;
   }
 
   .rail-intro,
@@ -921,12 +922,101 @@ code {
     border-radius: 16px;
   }
 
+  h1 {
+    font-size: clamp(2.15rem, 12vw, 2.8rem);
+  }
+
+  .hero h2 {
+    font-size: clamp(1.7rem, 9vw, 2.3rem);
+    max-width: 11ch;
+  }
+
+  .control-rail {
+    gap: 0.8rem;
+  }
+
+  .rail-intro,
+  .panel,
+  .methods-stage {
+    padding: 0.95rem;
+  }
+
+  .panel {
+    padding-bottom: 1rem;
+  }
+
+  .area-map {
+    min-height: 190px;
+  }
+
+  .area-list {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .area-button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .area-chip,
+  .mode-pill,
+  .stage-view-pill,
+  .branch-pill,
+  button,
+  select,
+  input[type="number"] {
+    min-height: 46px;
+  }
+
+  .mode-toggle,
+  .branch-toggle,
+  .stage-view-switch {
+    width: 100%;
+  }
+
+  .mode-toggle,
+  .branch-toggle {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #uptake-mode-toggle {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #population-view-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mode-pill,
+  .branch-pill,
+  .stage-view-pill {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .stage-view-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.35rem;
+  }
+
   .hero-metrics {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .methods-stage {
     padding: 0.9rem;
+  }
+
+  .methods-hero-note,
+  .methods-card,
+  .methods-detail,
+  .flow-step {
+    padding: 0.85rem;
+    border-radius: 16px;
   }
 
   .methods-stat-row {
@@ -934,11 +1024,100 @@ code {
     gap: 0.25rem;
   }
 
+  .timeline-bar {
+    gap: 0.8rem;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .timeline-copy strong {
+    font-size: 1.25rem;
+  }
+
+  .plot-frame {
+    padding: 0.85rem 0.85rem 0.55rem;
+  }
+
   .plot-surface {
-    min-height: 300px;
+    min-height: 260px;
   }
 
   .band-input-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  body::before {
+    background-size: 32px 32px;
+    opacity: 0.16;
+  }
+
+  .page-shell {
+    padding: 0.5rem;
+  }
+
+  .rail-intro,
+  .panel,
+  .plot-frame,
+  .timeline-bar,
+  .hero,
+  .methods-stage {
+    border-radius: 14px;
+  }
+
+  .field {
+    margin-bottom: 0.7rem;
+  }
+
+  .rule-note,
+  .load-error,
+  .methods-lead,
+  .methods-footnote,
+  .plot-note {
+    font-size: 0.94rem;
+  }
+
+  .area-button-grid,
+  .mode-toggle,
+  .branch-toggle,
+  .stage-view-switch,
+  #population-view-toggle {
+    grid-template-columns: 1fr;
+  }
+
+  #uptake-mode-toggle {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-view-toggle {
+    gap: 0.45rem;
+  }
+
+  .hero-metrics {
+    gap: 0.6rem;
+  }
+
+  .metric-tile {
+    padding: 0.75rem;
+  }
+
+  .metric-value {
+    font-size: 1.2rem;
+  }
+
+  .plot-surface {
+    min-height: 230px;
+  }
+
+  .methods-nav {
+    position: static;
+    gap: 0.45rem;
+    padding: 0.15rem 0;
+  }
+
+  .methods-chip {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 }

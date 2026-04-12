@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260412e";
-import { createInterventionStore } from "./interventions.mjs?v=20260412e";
+} from "./runtime.mjs?v=20260412f";
+import { createInterventionStore } from "./interventions.mjs?v=20260412f";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260412e";
+} from "./content.mjs?v=20260412f";
 
 
 const state = {
@@ -654,6 +654,14 @@ function currentAreaView() {
     return "map";
   }
   return activeButton.dataset.areaView || "map";
+}
+
+
+function defaultAreaView() {
+  if (window.matchMedia("(max-width: 720px)").matches) {
+    return "list";
+  }
+  return "map";
 }
 
 
@@ -2158,7 +2166,7 @@ function populateControls({ preserveSelections = false } = {}) {
   }
 
   syncMainViewToggle(previous?.mainView || "results");
-  syncAreaViewToggle(previous?.areaView || "map");
+  syncAreaViewToggle(previous?.areaView || defaultAreaView());
   syncPopulationViewToggle(previous?.populationView || "distribution");
   renderAreaSelector();
 
