@@ -44,16 +44,63 @@ export function buildAllSexWppHazard(demography, year) {
   const hazard = new Array(ages.length).fill(0);
 
   for (let age = 0; age < ages.length; age += 1) {
+    const maleHazard = Number(mortality.male[age]);
+    const femaleHazard = Number(mortality.female[age]);
     const malePopulation = population.male[age];
     const femalePopulation = population.female[age];
     const totalPopulation = malePopulation + femalePopulation;
 
-    if (totalPopulation <= 0) {
+    if (totalPopulation > 0) {
+      const weightedHazard = (maleHazard * malePopulation) + (femaleHazard * femalePopulation);
+      hazard[age] = weightedHazard / totalPopulation;
       continue;
     }
 
-    const weightedHazard = (mortality.male[age] * malePopulation) + (mortality.female[age] * femalePopulation);
-    hazard[age] = weightedHazard / totalPopulation;
+    if (maleHazard > 0 && femaleHazard > 0) {
+      hazard[age] = 0.5 * (maleHazard + femaleHazard);
+      continue;
+    }
+
+    if (maleHazard > 0) {
+      hazard[age] = maleHazard;
+      continue;
+    }
+
+    if (femaleHazard > 0) {
+      hazard[age] = femaleHazard;
+    }
+  }
+
+  const age100Index = ages.indexOf(100);
+  if (age100Index !== -1 && age100Index < ages.length - 1) {
+    const maleTail = mortality.male.slice(age100Index + 1);
+    const femaleTail = mortality.female.slice(age100Index + 1);
+    const maleTailIsOpenInterval = maleTail.length > 0 && (
+      maleTail.every((value) => Math.abs(value) < 1e-12)
+      || maleTail.every((value) => Math.abs(value - mortality.male[age100Index]) < 1e-12)
+    );
+    const femaleTailIsOpenInterval = femaleTail.length > 0 && (
+      femaleTail.every((value) => Math.abs(value) < 1e-12)
+      || femaleTail.every((value) => Math.abs(value - mortality.female[age100Index]) < 1e-12)
+    );
+
+    if (maleTailIsOpenInterval && femaleTailIsOpenInterval) {
+      const slopeWindow = hazard.slice(Math.max(0, age100Index - 5), age100Index + 1);
+      const positiveWindow = slopeWindow.filter((value) => value > 0);
+
+      if (positiveWindow.length >= 2) {
+        const logSlope = (
+          Math.log(positiveWindow[positiveWindow.length - 1]) - Math.log(positiveWindow[0])
+        ) / (positiveWindow.length - 1);
+
+        for (let fillAge = age100Index + 1; fillAge < ages.length; fillAge += 1) {
+          const yearsPastOpenInterval = fillAge - age100Index;
+          hazard[fillAge] = hazard[age100Index] * Math.exp(logSlope * yearsPastOpenInterval);
+        }
+
+        return hazard;
+      }
+    }
   }
 
   for (let age = ages.length - 1; age >= 0; age -= 1) {
@@ -94,6 +141,11 @@ function analyticExponent(target, factor, attainedAge, startAge, params) {
 
   if (target === "eta") {
     return -((xc / epsilon) * (eta - (factor * eta)) * (attainedAge - startAge));
+  }
+
+  if (target === "eta_shift") {
+    const etaShift = (factor * eta) - eta;
+    return -((xc / epsilon) * etaShift * attainedAge);
   }
 
   throw new Error(`Unsupported target: ${target}`);

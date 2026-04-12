@@ -24,8 +24,14 @@ class ScenarioSpec:
     projection_end_year: int | None = None
     uptake_mode: str = "threshold"
     threshold_age: int | None = None
+    threshold_probability: float = 1.0
     bands: tuple[AgeBandUptake, ...] = ()
     start_rule_within_band: str = "absolute"
+    rollout_curve: str = "linear"
+    rollout_launch_probability: float = 0.10
+    rollout_max_probability: float = 0.50
+    rollout_ramp_years: int = 12
+    rollout_takeoff_years: int = 8
     target: str | None = None
     factor: float = 1.0
     branch: str = "sr"
@@ -104,5 +110,12 @@ class ScenarioQuery:
     launch_year: int = 2025
     projection_end_year: int | None = 2100
     analytic_preset_id: str | None = None
+    threshold_age: int | None = None
+    threshold_probability: float | None = None
+    rollout_curve: str | None = None
+    rollout_launch_probability: float | None = None
+    rollout_max_probability: float | None = None
+    rollout_ramp_years: int | None = None
+    rollout_takeoff_years: int | None = None
     hetero_mode: str = "off"
     source: str = "auto"

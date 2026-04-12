@@ -29,6 +29,218 @@ function cloneTreated(treated) {
 }
 
 
+function tailPopulationWeights(mx, tailLength) {
+  if (tailLength <= 0) {
+    return [1];
+  }
+
+  const survival = Math.exp(-Math.max(0, Number(mx)));
+  const weights = new Array(tailLength + 1).fill(1);
+
+  for (let index = 1; index < weights.length; index += 1) {
+    weights[index] = weights[index - 1] * survival;
+  }
+
+  const total = weights.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) {
+    return weights.map(() => 1 / weights.length);
+  }
+
+  return weights.map((value) => value / total);
+}
+
+
+function tailLogHazardSlope(mxByAge, openAge, lookbackYears = 5) {
+  if (openAge <= 0) {
+    return null;
+  }
+
+  const startAge = Math.max(0, openAge - lookbackYears);
+  const window = mxByAge.slice(startAge, openAge + 1);
+  const positiveWindow = window.filter((value) => value > 0);
+  if (positiveWindow.length < 2) {
+    return null;
+  }
+
+  return (
+    Math.log(positiveWindow[positiveWindow.length - 1]) - Math.log(positiveWindow[0])
+  ) / (positiveWindow.length - 1);
+}
+
+
+function extendMortalityTail(mortalityByAge) {
+  const mx = cloneArray(mortalityByAge);
+  let lastPositiveAge = -1;
+
+  for (let age = mx.length - 1; age >= 0; age -= 1) {
+    if (mx[age] > 0) {
+      lastPositiveAge = age;
+      break;
+    }
+  }
+
+  if (lastPositiveAge < 0 || lastPositiveAge >= mx.length - 1) {
+    return mx;
+  }
+
+  if (lastPositiveAge !== 100) {
+    for (let age = lastPositiveAge + 1; age < mx.length; age += 1) {
+      mx[age] = mx[lastPositiveAge];
+    }
+    return mx;
+  }
+
+  const logSlope = tailLogHazardSlope(mx, lastPositiveAge);
+  if (logSlope === null) {
+    for (let age = lastPositiveAge + 1; age < mx.length; age += 1) {
+      mx[age] = mx[lastPositiveAge];
+    }
+    return mx;
+  }
+
+  for (let age = lastPositiveAge + 1; age < mx.length; age += 1) {
+    const yearsPastOpenAge = age - lastPositiveAge;
+    mx[age] = mx[lastPositiveAge] * Math.exp(logSlope * yearsPastOpenAge);
+  }
+
+  return mx;
+}
+
+
+function tailPopulationWeightsFromCurve(mxByAge) {
+  if (mxByAge.length === 0) {
+    return [1];
+  }
+
+  const weights = new Array(mxByAge.length).fill(1);
+  for (let index = 1; index < weights.length; index += 1) {
+    const annualSurvival = Math.exp(-Math.max(0, Number(mxByAge[index - 1])));
+    weights[index] = weights[index - 1] * annualSurvival;
+  }
+
+  const total = weights.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) {
+    return weights.map(() => 1 / weights.length);
+  }
+
+  return weights.map((value) => value / total);
+}
+
+
+function extendPopulationTail(populationByAge, mortalityByAge) {
+  const population = cloneArray(populationByAge);
+  let lastPositiveAge = -1;
+
+  for (let age = population.length - 1; age >= 0; age -= 1) {
+    if (population[age] > 0) {
+      lastPositiveAge = age;
+      break;
+    }
+  }
+
+  if (lastPositiveAge < 0 || lastPositiveAge >= population.length - 1) {
+    return population;
+  }
+
+  if (lastPositiveAge > 100) {
+    return population;
+  }
+
+  const openAgePopulation = Number(population[lastPositiveAge]);
+  if (openAgePopulation <= 0) {
+    return population;
+  }
+
+  const extendedMortality = extendMortalityTail(mortalityByAge);
+  const tailWeights = tailPopulationWeightsFromCurve(extendedMortality.slice(lastPositiveAge));
+  for (let offset = 0; offset < tailWeights.length; offset += 1) {
+    population[lastPositiveAge + offset] = openAgePopulation * tailWeights[offset];
+  }
+
+  return population;
+}
+
+
+function projectOneYearNoMigration(population, mortality, fertility, sexRatioAtBirth) {
+  const nextPopulation = {
+    male: zeroArray(population.male.length),
+    female: zeroArray(population.female.length),
+  };
+
+  const births = computeBirths(population.female, fertility, sexRatioAtBirth);
+  nextPopulation.male[0] = births.maleBirths;
+  nextPopulation.female[0] = births.femaleBirths;
+
+  for (const sex of ["male", "female"]) {
+    const survival = annualSurvivalFromMx(mortality[sex]);
+    const survivors = population[sex].map((value, age) => value * survival[age]);
+    const aged = ageSurvivors(survivors);
+
+    for (let age = 0; age < aged.length; age += 1) {
+      nextPopulation[sex][age] += aged[age];
+    }
+  }
+
+  return nextPopulation;
+}
+
+
+function deriveMigrationResiduals(demography) {
+  const residuals = {};
+  const years = demography.years.slice().sort((a, b) => a - b);
+
+  for (let index = 0; index < years.length - 1; index += 1) {
+    const year = years[index];
+    const nextYear = years[index + 1];
+    const projected = projectOneYearNoMigration(
+      demography.population[String(year)],
+      demography.mortality[String(year)],
+      demography.fertility[String(year)],
+      demography.sex_ratio_at_birth[String(year)],
+    );
+    const target = demography.population[String(nextYear)];
+
+    residuals[String(year)] = {
+      male: target.male.map((value, age) => value - projected.male[age]),
+      female: target.female.map((value, age) => value - projected.female[age]),
+    };
+  }
+
+  return residuals;
+}
+
+
+export function normalizeDemography(demography) {
+  const normalized = {
+    ...demography,
+    population: {},
+    mortality: {},
+    migration_residual: {},
+  };
+
+  for (const year of demography.years) {
+    const yearKey = String(year);
+    normalized.mortality[yearKey] = {
+      male: extendMortalityTail(demography.mortality[yearKey].male),
+      female: extendMortalityTail(demography.mortality[yearKey].female),
+    };
+    normalized.population[yearKey] = {
+      male: extendPopulationTail(
+        demography.population[yearKey].male,
+        normalized.mortality[yearKey].male,
+      ),
+      female: extendPopulationTail(
+        demography.population[yearKey].female,
+        normalized.mortality[yearKey].female,
+      ),
+    };
+  }
+
+  normalized.migration_residual = deriveMigrationResiduals(normalized);
+  return normalized;
+}
+
+
 function resolveAgeBands(bands, maxAge) {
   const resolved = [];
   let treatedBefore = 0;
@@ -55,7 +267,46 @@ function resolveAgeBands(bands, maxAge) {
 }
 
 
+function clampedProbability(value) {
+  return Math.max(0, Math.min(1, Number(value)));
+}
+
+
+export function rolloutProbabilityForYear(scenario, year) {
+  if (year < scenario.launch_year) {
+    return 0;
+  }
+
+  const launchProbability = clampedProbability(scenario.rollout_launch_probability ?? 0);
+  const maxProbability = clampedProbability(
+    Math.max(Number(scenario.rollout_max_probability ?? launchProbability), launchProbability),
+  );
+  if (maxProbability <= launchProbability) {
+    return launchProbability;
+  }
+
+  const yearsSinceLaunch = year - scenario.launch_year;
+
+  if (scenario.rollout_curve === "linear") {
+    const rampYears = Math.max(1, Number(scenario.rollout_ramp_years ?? 1));
+    const progress = Math.min(yearsSinceLaunch / rampYears, 1);
+    return launchProbability + ((maxProbability - launchProbability) * progress);
+  }
+
+  if (scenario.rollout_curve === "logistic") {
+    const takeoffYears = Math.max(1, Number(scenario.rollout_takeoff_years ?? 1));
+    const baseline = 1 / (1 + Math.exp(0.5 * takeoffYears));
+    const current = 1 / (1 + Math.exp(-0.5 * (yearsSinceLaunch - takeoffYears)));
+    const scaled = Math.max(0, Math.min(1, (current - baseline) / (1 - baseline)));
+    return launchProbability + ((maxProbability - launchProbability) * scaled);
+  }
+
+  throw new Error(`Unsupported rollout curve: ${scenario.rollout_curve}`);
+}
+
+
 function thresholdProbability(age, year, scenario) {
+  const probability = clampedProbability(scenario.threshold_probability ?? 1);
   if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
     return 0;
   }
@@ -66,12 +317,26 @@ function thresholdProbability(age, year, scenario) {
     return 0;
   }
   if (year === scenario.launch_year) {
-    return 1;
+    return probability;
   }
   if (age === scenario.threshold_age) {
-    return 1;
+    return probability;
   }
   return 0;
+}
+
+
+function rolloutProbability(age, year, scenario) {
+  if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
+    return 0;
+  }
+  if (year < scenario.launch_year) {
+    return 0;
+  }
+  if (age < scenario.threshold_age) {
+    return 0;
+  }
+  return rolloutProbabilityForYear(scenario, year);
 }
 
 
@@ -141,6 +406,10 @@ export function startProbabilityByAge(scenario, age, year, maxAge) {
     return thresholdProbability(age, year, scenario);
   }
 
+  if (scenario.uptake_mode === "rollout") {
+    return rolloutProbability(age, year, scenario);
+  }
+
   if (scenario.uptake_mode !== "banded") {
     throw new Error(`Unsupported uptake mode: ${scenario.uptake_mode}`);
   }
@@ -200,8 +469,34 @@ export function buildLifetimeStartWeights(scenario, startAges) {
     if (index === -1) {
       return { weights, untreatedShare: 1 };
     }
-    weights[index] = 1;
-    return { weights, untreatedShare: 0 };
+    const probability = Math.max(0, Math.min(1, Number(scenario.threshold_probability ?? 1)));
+    weights[index] = probability;
+    return { weights, untreatedShare: 1 - probability };
+  }
+
+  if (scenario.uptake_mode === "rollout") {
+    if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
+      return { weights, untreatedShare: 1 };
+    }
+
+    for (let age = Number(scenario.threshold_age); age <= startAges[startAges.length - 1]; age += 1) {
+      const index = startAges.indexOf(age);
+      if (index === -1) {
+        continue;
+      }
+
+      if (untreatedShare <= 0) {
+        return { weights, untreatedShare: 0 };
+      }
+
+      const probability = rolloutProbabilityForYear(scenario, scenario.launch_year + age);
+      const startShare = untreatedShare * probability;
+      weights[index] += startShare;
+      untreatedShare -= startShare;
+    }
+
+    untreatedShare = Math.max(0, Math.min(1, untreatedShare));
+    return { weights, untreatedShare };
   }
 
   const resolvedBands = resolveAgeBands(scenario.bands || [], startAges[startAges.length - 1]);
@@ -331,7 +626,78 @@ function pickYears(inputs, projectionEndYear) {
 }
 
 
-function applyMigrationResidual(state, residual) {
+function positiveResidualTreatedShare(age, year, scenario, maxAge, currentShare) {
+  if (!scenario || scenario.target === null || scenario.target === "none") {
+    return currentShare;
+  }
+
+  if (year < scenario.launch_year) {
+    return currentShare;
+  }
+
+  if (scenario.uptake_mode === "threshold") {
+    if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
+      return currentShare;
+    }
+    if (age < scenario.threshold_age) {
+      return 0;
+    }
+    return clampedProbability(scenario.threshold_probability ?? 1);
+  }
+
+  if (scenario.uptake_mode === "rollout") {
+    if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
+      return currentShare;
+    }
+    if (age < scenario.threshold_age) {
+      return 0;
+    }
+    return rolloutProbabilityForYear(scenario, year);
+  }
+
+  if (scenario.uptake_mode !== "banded") {
+    return currentShare;
+  }
+
+  const resolvedBands = resolveAgeBands(scenario.bands || [], maxAge);
+  for (const band of resolvedBands) {
+    if (age < band.startAge || age > band.endAge) {
+      continue;
+    }
+
+    if (scenario.start_rule_within_band === "absolute") {
+      return band.conditionalShare;
+    }
+
+    return currentShare;
+  }
+
+  return currentShare;
+}
+
+
+function addPositiveResidualToTreatedBuckets(treatedMatrix, age, treatedDelta, treatedByAge) {
+  if (treatedDelta <= 0) {
+    return;
+  }
+
+  if (treatedByAge > 0) {
+    for (let row = 0; row < treatedMatrix.length; row += 1) {
+      const rowShare = treatedMatrix[row][age] / treatedByAge;
+      treatedMatrix[row][age] += treatedDelta * rowShare;
+    }
+    return;
+  }
+
+  const rowIndex = Math.min(age, treatedMatrix.length - 1);
+  if (rowIndex < 0) {
+    return;
+  }
+  treatedMatrix[rowIndex][age] += treatedDelta;
+}
+
+
+function applyMigrationResidual(state, residual, scenario, year, maxAge) {
   if (!residual) {
     return {
       untreated: clonePopulation(state.untreated),
@@ -347,12 +713,20 @@ function applyMigrationResidual(state, residual) {
 
     for (let age = 0; age < residual[sex].length; age += 1) {
       const delta = residual[sex][age];
+      const total = untreated[sex][age] + treatedByAge[age];
+
       if (delta >= 0) {
-        untreated[sex][age] += delta;
+        const currentTreatedShare = total > 0 ? treatedByAge[age] / total : 0;
+        const treatedShare = positiveResidualTreatedShare(age, year + 1, scenario, maxAge, currentTreatedShare);
+        const safeTreatedShare = Math.max(0, Math.min(1, treatedShare));
+        const treatedDelta = delta * safeTreatedShare;
+        const untreatedDelta = delta - treatedDelta;
+
+        untreated[sex][age] += untreatedDelta;
+        addPositiveResidualToTreatedBuckets(treated[sex], age, treatedDelta, treatedByAge[age]);
         continue;
       }
 
-      const total = untreated[sex][age] + treatedByAge[age];
       if (total <= 0) {
         continue;
       }
@@ -397,6 +771,13 @@ function weightedMedianAge(totalPopulation) {
 
 
 function recordPopulationRows(rows, scenario, year, untreated, treated) {
+  const rolloutMetadata = {
+    rollout_curve: scenario.rollout_curve,
+    rollout_launch_probability: Number(scenario.rollout_launch_probability ?? 0),
+    rollout_max_probability: Number(scenario.rollout_max_probability ?? 0),
+    rollout_ramp_years: Number(scenario.rollout_ramp_years ?? 0),
+    rollout_takeoff_years: Number(scenario.rollout_takeoff_years ?? 0),
+  };
   for (const sex of ["male", "female"]) {
     const treatedByAge = sumTreatedByAge(treated[sex]);
     for (let age = 0; age < untreated[sex].length; age += 1) {
@@ -414,6 +795,7 @@ function recordPopulationRows(rows, scenario, year, untreated, treated) {
         launch_year: scenario.launch_year,
         uptake_mode: scenario.uptake_mode,
         threshold_age: scenario.threshold_age ?? -1,
+        threshold_probability: Number(scenario.threshold_probability ?? 1),
         start_rule_within_band: scenario.start_rule_within_band,
         target: scenario.target || "none",
         factor: scenario.factor,
@@ -424,6 +806,7 @@ function recordPopulationRows(rows, scenario, year, untreated, treated) {
         population_count: total,
         treated_population_count: treatedByAge[age],
         untreated_population_count: untreated[sex][age],
+        ...rolloutMetadata,
       });
     }
   }
@@ -431,6 +814,13 @@ function recordPopulationRows(rows, scenario, year, untreated, treated) {
 
 
 function recordSummaryRow(rows, scenario, year, untreated, treated, births, deaths) {
+  const rolloutMetadata = {
+    rollout_curve: scenario.rollout_curve,
+    rollout_launch_probability: Number(scenario.rollout_launch_probability ?? 0),
+    rollout_max_probability: Number(scenario.rollout_max_probability ?? 0),
+    rollout_ramp_years: Number(scenario.rollout_ramp_years ?? 0),
+    rollout_takeoff_years: Number(scenario.rollout_takeoff_years ?? 0),
+  };
   const treatedMale = sumTreatedByAge(treated.male);
   const treatedFemale = sumTreatedByAge(treated.female);
   const maleTotal = untreated.male.map((value, age) => value + treatedMale[age]);
@@ -460,6 +850,7 @@ function recordSummaryRow(rows, scenario, year, untreated, treated, births, deat
     launch_year: scenario.launch_year,
     uptake_mode: scenario.uptake_mode,
     threshold_age: scenario.threshold_age ?? -1,
+    threshold_probability: Number(scenario.threshold_probability ?? 1),
     start_rule_within_band: scenario.start_rule_within_band,
     target: scenario.target || "none",
     factor: scenario.factor,
@@ -475,6 +866,7 @@ function recordSummaryRow(rows, scenario, year, untreated, treated, births, deat
     median_age: weightedMedianAge(combined),
     old_age_share_60_plus: totalPopulation > 0 ? older60 / totalPopulation : 0,
     old_age_share_65_plus: totalPopulation > 0 ? older65 / totalPopulation : 0,
+    ...rolloutMetadata,
   });
 }
 
@@ -493,6 +885,7 @@ function buildSnapshot(untreated, treated) {
 export function projectScenario(inputs, scenario, interventionAsset) {
   const years = pickYears(inputs, scenario.projection_end_year);
   const ages = inputs.ages.slice();
+  const maxAge = ages[ages.length - 1];
   const startProbabilityTable = buildStartProbabilityTable(scenario, years, ages);
   const startAges = interventionAsset.start_ages.slice();
   const startAgeLookup = new Map(startAges.map((value, index) => [Number(value), index]));
@@ -593,7 +986,7 @@ export function projectScenario(inputs, scenario, interventionAsset) {
     };
 
     if (scenario.migration_mode === "on") {
-      nextState = applyMigrationResidual(nextState, inputs.migration_residual[String(year)]);
+      nextState = applyMigrationResidual(nextState, inputs.migration_residual[String(year)], scenario, year, maxAge);
     }
 
     untreated = nextState.untreated;
@@ -623,6 +1016,25 @@ export function buildPyramidSeries(result, year) {
     female: snapshot.untreated.female.map((value, age) => value + snapshot.treatedByAge.female[age]),
     treatedMale: snapshot.treatedByAge.male,
     treatedFemale: snapshot.treatedByAge.female,
+  };
+}
+
+
+export function buildAgeDistributionSeries(result, year) {
+  const snapshot = result.snapshots[String(year)];
+  const ages = snapshot.untreated.male.map((_, age) => age);
+  const untreated = ages.map((age) => {
+    return snapshot.untreated.male[age] + snapshot.untreated.female[age];
+  });
+  const treated = ages.map((age) => {
+    return snapshot.treatedByAge.male[age] + snapshot.treatedByAge.female[age];
+  });
+
+  return {
+    ages,
+    untreated,
+    treated,
+    total: ages.map((age) => untreated[age] + treated[age]),
   };
 }
 

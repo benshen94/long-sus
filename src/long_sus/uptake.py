@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import numpy as np
 
@@ -13,6 +14,40 @@ class ResolvedBand:
     end_age: int
     target_share: float
     conditional_share: float
+
+
+def _clamped_probability(value: float) -> float:
+    return float(np.clip(value, 0.0, 1.0))
+
+
+def rollout_probability_for_year(
+    scenario: ScenarioSpec,
+    year: int,
+) -> float:
+    if year < scenario.launch_year:
+        return 0.0
+
+    launch_probability = _clamped_probability(scenario.rollout_launch_probability)
+    max_probability = _clamped_probability(max(scenario.rollout_max_probability, launch_probability))
+    if max_probability <= launch_probability:
+        return launch_probability
+
+    years_since_launch = year - scenario.launch_year
+
+    if scenario.rollout_curve == "linear":
+        ramp_years = max(int(scenario.rollout_ramp_years), 1)
+        progress = min(years_since_launch / ramp_years, 1.0)
+        return launch_probability + ((max_probability - launch_probability) * progress)
+
+    if scenario.rollout_curve == "logistic":
+        takeoff_years = max(int(scenario.rollout_takeoff_years), 1)
+        baseline = 1.0 / (1.0 + math.exp(0.5 * takeoff_years))
+        current = 1.0 / (1.0 + math.exp(-0.5 * (years_since_launch - takeoff_years)))
+        scaled = (current - baseline) / (1.0 - baseline)
+        scaled = float(np.clip(scaled, 0.0, 1.0))
+        return launch_probability + ((max_probability - launch_probability) * scaled)
+
+    raise ValueError(f"Unsupported rollout curve: {scenario.rollout_curve}")
 
 
 def resolve_age_bands(
@@ -47,6 +82,7 @@ def resolve_age_bands(
 
 
 def _threshold_probability(age: int, year: int, scenario: ScenarioSpec) -> float:
+    threshold_probability = _clamped_probability(scenario.threshold_probability)
     if scenario.threshold_age is None:
         return 0.0
     if year < scenario.launch_year:
@@ -54,10 +90,20 @@ def _threshold_probability(age: int, year: int, scenario: ScenarioSpec) -> float
     if age < scenario.threshold_age:
         return 0.0
     if year == scenario.launch_year:
-        return 1.0
+        return threshold_probability
     if age == scenario.threshold_age:
-        return 1.0
+        return threshold_probability
     return 0.0
+
+
+def _rollout_probability(age: int, year: int, scenario: ScenarioSpec) -> float:
+    if scenario.threshold_age is None:
+        return 0.0
+    if year < scenario.launch_year:
+        return 0.0
+    if age < scenario.threshold_age:
+        return 0.0
+    return rollout_probability_for_year(scenario, year)
 
 
 def _absolute_probability(age: int, year: int, scenario: ScenarioSpec, band: ResolvedBand) -> float:
@@ -119,6 +165,9 @@ def start_probability_by_age(
     if scenario.uptake_mode == "threshold":
         return _threshold_probability(age, year, scenario)
 
+    if scenario.uptake_mode == "rollout":
+        return _rollout_probability(age, year, scenario)
+
     if scenario.uptake_mode != "banded":
         raise ValueError(f"Unsupported uptake mode: {scenario.uptake_mode}")
 
@@ -174,8 +223,28 @@ def build_lifetime_start_weights(
             return weights, 1.0
         if scenario.threshold_age > max_age:
             return weights, 1.0
-        weights[int(scenario.threshold_age)] = 1.0
-        return weights, 0.0
+        threshold_probability = _clamped_probability(scenario.threshold_probability)
+        weights[int(scenario.threshold_age)] = threshold_probability
+        return weights, 1.0 - threshold_probability
+
+    if scenario.uptake_mode == "rollout":
+        if scenario.threshold_age is None:
+            return weights, 1.0
+        if scenario.threshold_age > max_age:
+            return weights, 1.0
+
+        for age in range(int(scenario.threshold_age), max_age + 1):
+            if untreated_share <= 0.0:
+                return weights, 0.0
+
+            year = scenario.launch_year + age
+            probability = rollout_probability_for_year(scenario, year)
+            start_share = untreated_share * probability
+            weights[age] += start_share
+            untreated_share -= start_share
+
+        untreated_share = float(np.clip(untreated_share, 0.0, 1.0))
+        return weights, untreated_share
 
     resolved_bands = resolve_age_bands(scenario.bands, max_age=max_age)
     for band in resolved_bands:

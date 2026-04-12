@@ -91,12 +91,23 @@ START_RULES = (
 )
 
 UPTAKE_RULES = START_RULES + ("banded_percentages",)
+ROLLOUT_CURVES = ("linear", "logistic")
 
 ETA_FACTOR_GRID = (1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70)
-XC_FACTOR_GRID = (1.00, 1.10, 1.20)
+ETA_SHIFT_FACTOR_GRID = (1.00, 1.10, 1.20, 1.30, 1.40, 1.50, 1.60)
+XC_FACTOR_GRID = (1.00, 1.10, 1.20, 1.30, 1.40, 1.50, 1.60)
+ANALYTIC_FACTOR_MIN = 0.50
+ANALYTIC_FACTOR_MAX = 1.60
+ANALYTIC_FACTOR_STEP = 0.01
 DEFAULT_TARGET = "eta"
 DEFAULT_ETA_FACTOR = 0.80
+DEFAULT_ETA_SHIFT_FACTOR = 1.20
 DEFAULT_XC_FACTOR = 1.10
+DEFAULT_ROLLOUT_CURVE = "linear"
+DEFAULT_ROLLOUT_LAUNCH_PROBABILITY = 0.10
+DEFAULT_ROLLOUT_MAX_PROBABILITY = 0.50
+DEFAULT_ROLLOUT_RAMP_YEARS = 12
+DEFAULT_ROLLOUT_TAKEOFF_YEARS = 8
 MIN_START_AGE = 0
 MAX_START_AGE = MAX_AGE
 VALIDATION_SCHEME_IDS = (
@@ -110,4 +121,6 @@ VALIDATION_SCHEME_IDS = (
     "prescription_bands_equal_probabilities",
     "prescription_bands_uniform_start_age",
     "threshold_age_60_all_eligible",
+    "rollout_threshold_linear",
+    "rollout_threshold_logistic",
 )

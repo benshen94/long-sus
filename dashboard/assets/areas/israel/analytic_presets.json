@@ -1,0 +1,27 @@
+{
+  "country": "Israel",
+  "default_preset_id": "israel_period_2024_both_hazard",
+  "presets": [
+    {
+      "id": "israel_period_2024_both_hazard",
+      "label": "Israel 2024 Hazard Fit",
+      "country": "Israel",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5373476852708058,
+        "beta": 54.75,
+        "epsilon": 33.60759705878091,
+        "Xc": 16.279255771875754
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 376,
+      "h_ext": 0.00014065250076629907,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.12067859781837986."
+    }
+  ]
+}

@@ -82,13 +82,33 @@ class UptakeTest(unittest.TestCase):
             launch_year=2025,
             uptake_mode="threshold",
             threshold_age=60,
+            threshold_probability=0.5,
             target="eta",
             factor=0.80,
         )
 
-        self.assertEqual(start_probability_by_age(scenario, age=75, year=2025, max_age=MAX_AGE), 1.0)
-        self.assertEqual(start_probability_by_age(scenario, age=60, year=2030, max_age=MAX_AGE), 1.0)
+        self.assertEqual(start_probability_by_age(scenario, age=75, year=2025, max_age=MAX_AGE), 0.5)
+        self.assertEqual(start_probability_by_age(scenario, age=60, year=2030, max_age=MAX_AGE), 0.5)
         self.assertEqual(start_probability_by_age(scenario, age=59, year=2030, max_age=MAX_AGE), 0.0)
+
+    def test_threshold_lifetime_weights_keep_untreated_remainder(self) -> None:
+        scenario = ScenarioSpec(
+            name="threshold_weights",
+            launch_year=2025,
+            uptake_mode="threshold",
+            threshold_age=60,
+            threshold_probability=0.5,
+            target="eta",
+            factor=0.80,
+        )
+
+        weights, untreated_share = build_lifetime_start_weights(
+            scenario=scenario,
+            ages=np.arange(0, MAX_AGE + 1, dtype=int),
+        )
+
+        self.assertTrue(math.isclose(weights[60], 0.5))
+        self.assertTrue(math.isclose(untreated_share, 0.5))
 
     def test_lifetime_weights_for_absolute_bands_leave_untreated_remainder(self) -> None:
         scenario = ScenarioSpec(

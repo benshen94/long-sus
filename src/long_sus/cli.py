@@ -34,6 +34,13 @@ def _build_query(args: argparse.Namespace) -> ScenarioQuery:
         branch=args.branch,
         year=args.year,
         sex=getattr(args, "sex", None),
+        threshold_age=getattr(args, "threshold_age", None),
+        threshold_probability=getattr(args, "threshold_probability", None),
+        rollout_curve=getattr(args, "rollout_curve", None),
+        rollout_launch_probability=getattr(args, "rollout_launch_probability", None),
+        rollout_max_probability=getattr(args, "rollout_max_probability", None),
+        rollout_ramp_years=getattr(args, "rollout_ramp_years", None),
+        rollout_takeoff_years=getattr(args, "rollout_takeoff_years", None),
         source=args.source,
     )
 
@@ -46,6 +53,13 @@ def _add_query_args(parser: argparse.ArgumentParser, *, require_year: bool) -> N
     parser.add_argument("--branch", default="analytic_arm")
     parser.add_argument("--source", default="auto")
     parser.add_argument("--year", type=int, required=require_year)
+    parser.add_argument("--threshold-age", type=int)
+    parser.add_argument("--threshold-probability", type=float)
+    parser.add_argument("--rollout-curve")
+    parser.add_argument("--rollout-launch-probability", type=float)
+    parser.add_argument("--rollout-max-probability", type=float)
+    parser.add_argument("--rollout-ramp-years", type=int)
+    parser.add_argument("--rollout-takeoff-years", type=int)
 
 
 def _print_frame(frame: pd.DataFrame, output_format: str) -> None:

@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   color-scheme: light;
 }
@@ -143,6 +147,10 @@ h1 {
   margin-bottom: 0.85rem;
 }
 
+.panel-head .field-head {
+  justify-self: start;
+}
+
 .field,
 .action-stack {
   display: grid;
@@ -151,6 +159,21 @@ h1 {
 
 .field {
   margin-bottom: 0.85rem;
+}
+
+.field-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.field-grid.two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.intro-field {
+  margin-top: 0.9rem;
+  margin-bottom: 0.75rem;
 }
 
 .field-head {
@@ -197,6 +220,64 @@ h1 {
   margin-top: 0.9rem;
 }
 
+.area-selector {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.area-surface {
+  border: 1px solid rgba(120, 107, 90, 0.18);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 250, 240, 0.9), rgba(244, 236, 223, 0.95));
+  overflow: hidden;
+}
+
+.area-map {
+  min-height: 260px;
+}
+
+.area-list {
+  display: grid;
+  gap: 0.95rem;
+  padding: 0.9rem;
+}
+
+.area-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.area-group-title {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.area-button-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.area-chip {
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper-strong);
+  color: var(--ink);
+  padding: 0.55rem 0.82rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.area-chip.is-active {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+
 .branch-pill {
   padding: 0.58rem 0.9rem;
   border-radius: 999px;
@@ -220,6 +301,41 @@ h1 {
 .branch-pill:hover {
   transform: none;
   filter: none;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.mode-pill {
+  padding: 0.62rem 0.92rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper-strong);
+  color: var(--ink-soft);
+  box-shadow: none;
+}
+
+.mode-pill.is-active {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+
+.timeline-view-toggle {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.timeline-toggle-label {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 .field span,
@@ -392,7 +508,7 @@ button.ghost {
 
 .timeline-bar {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto auto minmax(260px, 1fr);
   gap: 1rem;
   align-items: center;
   padding: 0.95rem 1.1rem;
@@ -465,6 +581,15 @@ code {
   .hero,
   .pyramid-grid,
   .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-bar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .field-grid.two-up {
     grid-template-columns: 1fr;
   }
 

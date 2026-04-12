@@ -144,12 +144,44 @@ def _toy_demography_payload(inputs: VariantInputs) -> dict[str, object]:
 
 
 class ValidationDashboardTest(unittest.TestCase):
+    def test_dashboard_manifest_lists_multiple_areas(self) -> None:
+        manifest_path = PROJECT_ROOT / "dashboard" / "assets" / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+
+        area_slugs = [area["slug"] for area in manifest["areas"]]
+        self.assertEqual(manifest["default_area"], "world")
+        self.assertIn("world", area_slugs)
+        self.assertIn("usa", area_slugs)
+        self.assertIn("india", area_slugs)
+        self.assertIn("brazil", area_slugs)
+        self.assertIn("south_africa", area_slugs)
+
+    def test_dashboard_area_assets_exist_for_supported_examples(self) -> None:
+        manifest = json.loads((PROJECT_ROOT / "dashboard" / "assets" / "manifest.json").read_text())
+        by_slug = {area["slug"]: area for area in manifest["areas"]}
+
+        for slug in ("world", "usa", "south_africa"):
+            area = by_slug[slug]
+            demography_path = PROJECT_ROOT / "dashboard" / "assets" / area["paths"]["demography"].replace("./", "")
+            analytic_preset_path = PROJECT_ROOT / "dashboard" / "assets" / area["paths"]["analytic_presets"].replace("./", "")
+            self.assertTrue(demography_path.exists())
+            self.assertTrue(analytic_preset_path.exists())
+
     def test_world_analytic_preset_is_default(self) -> None:
         preset = get_analytic_preset(default_analytic_preset_id())
         catalog = build_analytic_preset_catalog_payload()
 
         self.assertEqual(preset["country"], "World")
         self.assertEqual(catalog["default_preset_id"], default_analytic_preset_id())
+
+    def test_world_dashboard_catalog_excludes_legacy_usa_preset(self) -> None:
+        catalog = build_analytic_preset_catalog_payload(
+            country="World",
+            include_legacy=False,
+        )
+
+        preset_ids = [preset["id"] for preset in catalog["presets"]]
+        self.assertEqual(preset_ids, ["world_period_2024_both_hazard"])
 
     def test_eta_factor_one_reproduces_baseline_surface(self) -> None:
         asset = build_sr_intervention_asset(
@@ -255,6 +287,85 @@ class ValidationDashboardTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(extended_hazard[6:], extended_hazard[5]))
 
+    def test_analytic_wpp_hazard_extrapolates_after_age_100(self) -> None:
+        inputs = _toy_inputs()
+        ages = np.arange(0, 106, dtype=int)
+        padded_population = np.ones(106, dtype=float)
+        padded_mortality = np.linspace(0.01, 1.06, 106, dtype=float)
+        padded_mortality[101:] = padded_mortality[100]
+
+        extended_inputs = inputs.__class__(
+            **{
+                **inputs.__dict__,
+                "ages": ages,
+                "population": {
+                    2024: {"male": padded_population.copy(), "female": padded_population.copy()},
+                    2025: {"male": padded_population.copy(), "female": padded_population.copy()},
+                    2026: {"male": padded_population.copy(), "female": padded_population.copy()},
+                },
+                "mortality": {
+                    2024: {"male": padded_mortality.copy(), "female": padded_mortality.copy()},
+                    2025: {"male": padded_mortality.copy(), "female": padded_mortality.copy()},
+                },
+                "fertility": {
+                    2024: np.zeros(106, dtype=float),
+                    2025: np.zeros(106, dtype=float),
+                },
+                "migration_residual": {
+                    2024: {"male": np.zeros(106, dtype=float), "female": np.zeros(106, dtype=float)},
+                    2025: {"male": np.zeros(106, dtype=float), "female": np.zeros(106, dtype=float)},
+                },
+            }
+        )
+
+        hazard = build_all_sex_wpp_hazard(inputs=extended_inputs, year=2024)
+        expected_log_slope = (
+            np.log(padded_mortality[100]) - np.log(padded_mortality[95])
+        ) / 5.0
+
+        self.assertAlmostEqual(hazard[100], padded_mortality[100])
+        self.assertAlmostEqual(hazard[101], padded_mortality[100] * np.exp(expected_log_slope))
+        self.assertGreater(hazard[105], hazard[104])
+
+    def test_analytic_wpp_hazard_stays_positive_when_tail_population_is_zero(self) -> None:
+        inputs = _toy_inputs()
+        ages = np.arange(0, 106, dtype=int)
+        padded_population = np.ones(106, dtype=float)
+        padded_population[101:] = 0.0
+        padded_male_mortality = np.linspace(0.01, 1.06, 106, dtype=float)
+        padded_female_mortality = np.linspace(0.02, 0.96, 106, dtype=float)
+        padded_male_mortality[101:] = padded_male_mortality[100]
+        padded_female_mortality[101:] = padded_female_mortality[100]
+
+        extended_inputs = inputs.__class__(
+            **{
+                **inputs.__dict__,
+                "ages": ages,
+                "population": {
+                    2024: {"male": padded_population.copy(), "female": padded_population.copy()},
+                    2025: {"male": padded_population.copy(), "female": padded_population.copy()},
+                    2026: {"male": padded_population.copy(), "female": padded_population.copy()},
+                },
+                "mortality": {
+                    2024: {"male": padded_male_mortality.copy(), "female": padded_female_mortality.copy()},
+                    2025: {"male": padded_male_mortality.copy(), "female": padded_female_mortality.copy()},
+                },
+                "fertility": {
+                    2024: np.zeros(106, dtype=float),
+                    2025: np.zeros(106, dtype=float),
+                },
+                "migration_residual": {
+                    2024: {"male": np.zeros(106, dtype=float), "female": np.zeros(106, dtype=float)},
+                    2025: {"male": np.zeros(106, dtype=float), "female": np.zeros(106, dtype=float)},
+                },
+            }
+        )
+
+        hazard = build_all_sex_wpp_hazard(inputs=extended_inputs, year=2024)
+
+        self.assertGreater(hazard[101], 0.0)
+        self.assertGreater(hazard[105], hazard[101])
+
     def test_analytic_xc_multiplier_depends_on_attained_age_only(self) -> None:
         preset = get_analytic_preset("usa_period_2019_both_hazard")
         ages = np.arange(0, 8, dtype=int)
@@ -298,6 +409,27 @@ class ValidationDashboardTest(unittest.TestCase):
         self.assertAlmostEqual(row_age_2[5], row_age_4[7])
         self.assertAlmostEqual(row_age_2[6], row_age_4[8])
 
+    def test_analytic_eta_shift_multiplier_depends_on_attained_age(self) -> None:
+        preset = get_analytic_preset("usa_period_2019_both_hazard")
+        ages = np.arange(0, 10, dtype=int)
+
+        row_age_2 = build_analytic_multiplier_row(
+            target="eta_shift",
+            factor=1.2,
+            start_age=2,
+            ages=ages,
+            preset=preset,
+        )
+        row_age_4 = build_analytic_multiplier_row(
+            target="eta_shift",
+            factor=1.2,
+            start_age=4,
+            ages=ages,
+            preset=preset,
+        )
+
+        self.assertTrue(np.allclose(row_age_2[4:], row_age_4[4:]))
+
     def test_no_one_matches_factor_one_threshold_projection(self) -> None:
         inputs = _toy_inputs()
         intervention_asset = _toy_intervention_asset(active_multiplier=1.0)
@@ -320,6 +452,35 @@ class ValidationDashboardTest(unittest.TestCase):
                 treated_population["population_count"].to_numpy(),
             )
         )
+
+    def test_positive_old_age_migration_residual_stays_treated_after_threshold(self) -> None:
+        inputs = _toy_inputs()
+        inputs.migration_residual[2024]["male"][5] = 4.0
+        inputs.migration_residual[2024]["female"][5] = 4.0
+        intervention_asset = _toy_intervention_asset()
+
+        scenario = build_validation_scenario(
+            "threshold_age_60_all_eligible",
+            target="eta",
+            factor=0.80,
+            projection_end_year=2025,
+            branch="analytic_arm",
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+        scenario = scenario.__class__(
+            **{
+                **scenario.__dict__,
+                "launch_year": 2024,
+                "threshold_age": 3,
+                "projection_end_year": 2025,
+            }
+        )
+
+        population, _ = project_scenario(scenario, inputs, intervention_asset)
+        old_age_rows = population[(population["year"] == 2025) & (population["age"] == 5)]
+
+        self.assertTrue((old_age_rows["untreated_population_count"] == 0.0).all())
+        self.assertTrue((old_age_rows["treated_population_count"] == old_age_rows["population_count"]).all())
 
     def test_different_start_schemes_diverge_when_effect_is_active(self) -> None:
         inputs = _toy_inputs()
@@ -534,6 +695,76 @@ class ValidationDashboardTest(unittest.TestCase):
         self.assertEqual(
             python_summary["total_population"].round(8).tolist(),
             [round(row["total_population"], 8) for row in js_output["summaryRows"]],
+        )
+
+    def test_js_threshold_projection_keeps_positive_old_age_migration_treated(self) -> None:
+        inputs = _toy_inputs()
+        inputs.migration_residual[2024]["male"][5] = 4.0
+        inputs.migration_residual[2024]["female"][5] = 4.0
+        scenario = build_validation_scenario(
+            "threshold_age_60_all_eligible",
+            target="eta",
+            factor=0.80,
+            projection_end_year=2025,
+            branch="analytic_arm",
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+        scenario = scenario.__class__(
+            **{
+                **scenario.__dict__,
+                "launch_year": 2024,
+                "threshold_age": 3,
+                "projection_end_year": 2025,
+            }
+        )
+        intervention_asset = build_analytic_intervention_asset(
+            inputs=inputs,
+            target="eta",
+            factor=0.8,
+            launch_year=2024,
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+
+        payload = {
+            "inputs": _toy_demography_payload(inputs),
+            "scenario": scenario.__dict__,
+            "interventionAsset": {
+                "target": intervention_asset.target,
+                "factor": intervention_asset.factor,
+                "hetero_mode": intervention_asset.hetero_mode,
+                "start_ages": intervention_asset.start_ages.astype(int).tolist(),
+                "ages": intervention_asset.ages.astype(int).tolist(),
+                "annual_hazard_multiplier": intervention_asset.annual_hazard_multiplier.tolist(),
+                "baseline_survival": intervention_asset.baseline_survival.tolist(),
+                "survival_by_start_age": intervention_asset.survival_by_start_age.tolist(),
+            },
+        }
+
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
+            payload_path = Path(handle.name)
+            handle.write(json.dumps(payload))
+
+        try:
+            result = subprocess.run(
+                ["node", "tests/js_helpers/run_projection_parity.mjs", str(payload_path)],
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        finally:
+            payload_path.unlink(missing_ok=True)
+
+        js_output = json.loads(result.stdout)
+        old_age_rows = [
+            row
+            for row in js_output["populationRows"]
+            if row["year"] == 2025 and row["age"] == 5
+        ]
+
+        self.assertTrue(all(row["untreated_population_count"] == 0.0 for row in old_age_rows))
+        self.assertTrue(
+            all(row["treated_population_count"] == row["population_count"] for row in old_age_rows)
         )
 
     def test_intervention_store_lazy_loads_sr_and_caches_results(self) -> None:

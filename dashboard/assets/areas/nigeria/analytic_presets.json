@@ -1,0 +1,27 @@
+{
+  "country": "Nigeria",
+  "default_preset_id": "nigeria_period_2024_both_hazard",
+  "presets": [
+    {
+      "id": "nigeria_period_2024_both_hazard",
+      "label": "Nigeria 2024 Hazard Fit",
+      "country": "Nigeria",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5611380997763598,
+        "beta": 54.75,
+        "epsilon": 45.51327473607405,
+        "Xc": 17.0
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 566,
+      "h_ext": 0.006115572411919483,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.06834503563266436."
+    }
+  ]
+}

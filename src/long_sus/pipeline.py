@@ -25,9 +25,14 @@ from .config import (
     XC_FACTOR_GRID,
 )
 from .countries import list_supported_country_specs
-from .dashboard_assets import write_usa_dashboard_assets
+from .dashboard_assets import write_multi_area_dashboard_assets, write_usa_dashboard_assets
 from .dashboard_capture import capture_dashboard_artifacts
-from .data_sources import download_usa_wpp_bundle, download_world_wpp_bundle
+from .data_sources import (
+    download_country_wpp_bundle,
+    download_usa_wpp_bundle,
+    download_world_wpp_bundle,
+    load_cached_country_wpp_bundle,
+)
 from .documentation import (
     write_dashboard_doc,
     write_pipeline_doc,
@@ -229,23 +234,24 @@ def run_usa_pipeline() -> ForecastArtifacts:
 
 
 def build_world_analytic_dashboard_assets() -> None:
-    from .dashboard_assets import write_dashboard_assets
-
     _ensure_output_dirs()
 
-    bundle = download_world_wpp_bundle()
-    inputs = build_variant_inputs(bundle, "medium")
-    write_dashboard_assets(
-        inputs=inputs,
+    area_specs = list_supported_country_specs()
+    area_inputs = {}
+
+    for area_spec in area_specs:
+        try:
+            bundle = load_cached_country_wpp_bundle(area_spec)
+        except FileNotFoundError:
+            bundle = download_country_wpp_bundle(area_spec)
+        area_inputs[area_spec.slug] = build_variant_inputs(bundle, "medium")
+
+    write_multi_area_dashboard_assets(
+        area_inputs=area_inputs,
+        area_specs=area_specs,
         intervention_grid={},
-        calibration_curves=None,
-        calibration_parameters=None,
-        country="World",
-        country_label="World",
-        title="World Analytic Longevity Dashboard",
-        branch_options=[ANALYTIC_BRANCH],
-        default_branch=ANALYTIC_BRANCH,
-        analytic_preset_id=default_analytic_preset_id(),
+        title="Analytic Longevity Dashboard",
+        default_area_slug="world",
     )
 
 

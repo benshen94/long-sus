@@ -72,11 +72,14 @@ class QueryApiTest(unittest.TestCase):
         schemes = list_supported_schemes()
 
         self.assertTrue(any(country["country"] == "World" for country in countries))
+        self.assertTrue(any(country["country"] == "India" for country in countries))
+        self.assertTrue(any(country["country"] == "Brazil" for country in countries))
         self.assertTrue(any(scheme["id"] == "threshold_age_60_all_eligible" for scheme in schemes))
 
     def test_country_registry_accepts_slug_and_display_name(self) -> None:
         self.assertEqual(get_country_spec("world").name, "World")
         self.assertEqual(get_country_spec("South Africa").slug, "south_africa")
+        self.assertEqual(get_country_spec("Israel").iso3, "ISR")
 
     def test_invalid_none_target_combination_is_rejected(self) -> None:
         with self.assertRaises(ValueError):
@@ -90,6 +93,23 @@ class QueryApiTest(unittest.TestCase):
                 ),
                 catalog_path=self.catalog_path,
             )
+
+    def test_high_xc_factor_is_accepted_for_on_demand_projection(self) -> None:
+        frame = get_population_size(
+            ScenarioQuery(
+                country="World",
+                scheme_id="threshold_age_60_all_eligible",
+                target="Xc",
+                factor=1.6,
+                branch="analytic_arm",
+                year=2050,
+                source="project",
+            ),
+            catalog_path=self.catalog_path,
+        )
+
+        self.assertFalse(frame.empty)
+        self.assertEqual(float(frame.loc[0, "factor"]), 1.6)
 
     def test_catalog_population_pyramid_query_returns_rows(self) -> None:
         query = ScenarioQuery(
@@ -166,3 +186,23 @@ class QueryApiTest(unittest.TestCase):
 
         self.assertFalse(pyramid.empty)
         self.assertFalse(size.empty)
+
+    def test_threshold_query_overrides_are_applied(self) -> None:
+        frame = get_population_size(
+            ScenarioQuery(
+                country="World",
+                scheme_id="threshold_age_60_all_eligible",
+                target="eta",
+                factor=0.8,
+                branch="analytic_arm",
+                year=2050,
+                source="project",
+                threshold_age=55,
+                threshold_probability=0.5,
+            ),
+            catalog_path=self.catalog_path,
+        )
+
+        self.assertFalse(frame.empty)
+        self.assertEqual(float(frame.loc[0, "threshold_age"]), 55.0)
+        self.assertEqual(float(frame.loc[0, "threshold_probability"]), 0.5)

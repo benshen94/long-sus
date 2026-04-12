@@ -30,13 +30,14 @@ For the public multi-country API, `analytic_arm` is the supported first-class br
 
 The public API uses the current internal vocabulary directly.
 
-- `country`: one of `USA`, `World`, `Italy`, `South Africa`, `Uganda`
+- `country`: one of `USA`, `World`, `China`, `India`, `Israel`, `Italy`, `Brazil`, `Nigeria`, `South Africa`, `Uganda`
 - `scheme_id`: the treatment-start rule, for example `threshold_age_60_all_eligible`
-- `target`: which parameter the intervention changes: `eta`, `Xc`, or `none`
+- `target`: which parameter the intervention changes: `eta`, `eta_shift`, `Xc`, or `none`
 - `factor`: the intervention strength
 - `branch`: `analytic_arm` or `sr`
 - `year`: projection year
 - `sex`: optional, `male` or `female`
+- `threshold_probability`: optional override for threshold schemes, from `0.0` to `1.0`
 
 ### Treatment scheme
 
@@ -62,7 +63,16 @@ Run `long-sus schemes` or `long_sus.list_supported_schemes()` to inspect the ful
 - For `target="Xc"`:
   - `factor=1.0` means no intervention effect.
   - Larger values mean a stronger `Xc` intervention.
-  - The shipped analytic catalog currently includes `1.00, 1.10, 1.20`.
+  - The supported built-in grid is `1.00, 1.10, 1.20, 1.30, 1.40, 1.50, 1.60`.
+- For `target="eta_shift"`:
+  - `factor=1.0` means no intervention effect.
+  - The model applies an immediate eta shift after treatment starts:
+
+$$
+\eta_{{new}} = \eta_{{old}} \cdot \mathrm{{factor}}.
+$$
+
+  - The supported built-in grid is `1.00, 1.10, 1.20, 1.30, 1.40, 1.50, 1.60`.
 - For `target="none"`:
   - use `scheme_id="no_one"`
   - use `factor=1.0`
@@ -77,7 +87,7 @@ $$
 
 ### Public multi-country path
 
-- `analytic_arm` supports `USA`, `World`, `Italy`, `South Africa`, and `Uganda`
+- `analytic_arm` supports `USA`, `World`, `China`, `India`, `Israel`, `Italy`, `Brazil`, `Nigeria`, `South Africa`, and `Uganda`
 - built-in catalog queries use each country's default analytic preset
 - custom analytic factors are computed on demand
 - the tracked summary catalog bundled in the repo is intentionally compact and currently includes `USA` and `World`
@@ -157,6 +167,42 @@ female_pyramid = get_population_pyramid(
         branch="analytic_arm",
         year=2075,
         sex="female",
+    )
+)
+```
+
+### Threshold query with a fixed treated share
+
+This keeps the treated share fixed at the threshold. For example, `0.5` means half of each eligible cohort starts when it first reaches the threshold age, and the untreated half never catch up later.
+
+```python
+from long_sus import ScenarioQuery, get_population_size
+
+half_take_up = get_population_size(
+    ScenarioQuery(
+        country="India",
+        scheme_id="threshold_age_60_all_eligible",
+        target="eta",
+        factor=0.8,
+        branch="analytic_arm",
+        threshold_age=60,
+        threshold_probability=0.5,
+    )
+)
+```
+
+### Rejuvenation example
+
+```python
+from long_sus import ScenarioQuery, get_population_size
+
+rejuvenation = get_population_size(
+    ScenarioQuery(
+        country="China",
+        scheme_id="threshold_age_60_all_eligible",
+        target="eta_shift",
+        factor=1.2,
+        branch="analytic_arm",
     )
 )
 ```

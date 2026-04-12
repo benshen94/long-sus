@@ -117,19 +117,49 @@ def default_analytic_preset_id() -> str:
     return DEFAULT_ANALYTIC_PRESET_ID
 
 
-def list_analytic_presets() -> list[dict[str, object]]:
-    return [ANALYTIC_PRESETS[preset_id] for preset_id in sorted(ANALYTIC_PRESETS)]
+def list_analytic_presets(
+    *,
+    country: str | None = None,
+    include_legacy: bool = True,
+) -> list[dict[str, object]]:
+    presets: list[dict[str, object]] = []
+
+    for preset_id in sorted(ANALYTIC_PRESETS):
+        if not include_legacy and preset_id == LEGACY_USA_ANALYTIC_PRESET_ID:
+            continue
+
+        preset = ANALYTIC_PRESETS[preset_id]
+        if country is not None and str(preset.get("country")) != country:
+            continue
+
+        presets.append(preset)
+
+    return presets
 
 
 def build_analytic_preset_catalog_payload(
     default_preset_id: str | None = None,
+    *,
+    country: str | None = None,
+    include_legacy: bool = True,
 ) -> dict[str, object]:
     safe_default_preset_id = default_preset_id or default_analytic_preset_id()
+    presets = list_analytic_presets(
+        country=country,
+        include_legacy=include_legacy,
+    )
+    if not presets:
+        raise KeyError("No analytic presets matched the requested filter")
+
+    preset_ids = {str(preset["id"]) for preset in presets}
+    if safe_default_preset_id not in preset_ids:
+        safe_default_preset_id = str(presets[0]["id"])
+
     default_preset = get_analytic_preset(safe_default_preset_id)
     return {
         "country": default_preset["country"],
         "default_preset_id": safe_default_preset_id,
-        "presets": list_analytic_presets(),
+        "presets": presets,
     }
 
 
@@ -143,7 +173,7 @@ def get_analytic_preset(preset_id: str | None) -> dict[str, object]:
 def resolve_intervention_target(target: str | None) -> str:
     if target in (None, "none"):
         return "eta"
-    if target not in {"eta", "Xc"}:
+    if target not in {"eta", "eta_shift", "Xc"}:
         raise ValueError(f"Unsupported target: {target}")
     return target
 
@@ -193,19 +223,68 @@ def build_all_sex_wpp_hazard(
     female_population = inputs.population[year]["female"]
     total_population = male_population + female_population
 
-    weighted_hazard = (
-        inputs.mortality[year]["male"] * male_population
-        + inputs.mortality[year]["female"] * female_population
-    )
-
     hazard = np.zeros_like(total_population, dtype=float)
-    nonzero_mask = total_population > 0.0
-    if np.any(nonzero_mask):
-        hazard[nonzero_mask] = weighted_hazard[nonzero_mask] / total_population[nonzero_mask]
-        last_observed_age = int(np.flatnonzero(nonzero_mask)[-1])
-        # Analytic-arm tail assumption:
-        # beyond the last observed WPP age, keep the final observed hazard flat.
-        hazard[last_observed_age + 1 :] = hazard[last_observed_age]
+    male_hazard = np.asarray(inputs.mortality[year]["male"], dtype=float)
+    female_hazard = np.asarray(inputs.mortality[year]["female"], dtype=float)
+
+    for age in range(len(hazard)):
+        if total_population[age] > 0.0:
+            weighted_hazard = (
+                male_hazard[age] * male_population[age]
+                + female_hazard[age] * female_population[age]
+            )
+            hazard[age] = weighted_hazard / total_population[age]
+            continue
+
+        male_value = float(male_hazard[age])
+        female_value = float(female_hazard[age])
+        if male_value > 0.0 and female_value > 0.0:
+            hazard[age] = 0.5 * (male_value + female_value)
+            continue
+        if male_value > 0.0:
+            hazard[age] = male_value
+            continue
+        if female_value > 0.0:
+            hazard[age] = female_value
+
+    positive_mask = hazard > 0.0
+    if np.any(positive_mask):
+        ages = np.asarray(inputs.ages, dtype=int)
+        age_100_matches = np.flatnonzero(ages == 100)
+        if age_100_matches.size:
+            age_100_index = int(age_100_matches[0])
+            male_tail = np.asarray(inputs.mortality[year]["male"][age_100_index + 1 :], dtype=float)
+            female_tail = np.asarray(inputs.mortality[year]["female"][age_100_index + 1 :], dtype=float)
+            male_tail_is_open_interval = (
+                male_tail.size > 0
+                and (
+                    np.allclose(male_tail, 0.0)
+                    or np.allclose(male_tail, inputs.mortality[year]["male"][age_100_index])
+                )
+            )
+            female_tail_is_open_interval = (
+                female_tail.size > 0
+                and (
+                    np.allclose(female_tail, 0.0)
+                    or np.allclose(female_tail, inputs.mortality[year]["female"][age_100_index])
+                )
+            )
+            needs_open_tail_extrapolation = male_tail_is_open_interval and female_tail_is_open_interval
+            if needs_open_tail_extrapolation:
+                tail = hazard[age_100_index + 1 :]
+                slope_window = hazard[max(0, age_100_index - 5) : age_100_index + 1]
+                positive_window = slope_window[slope_window > 0.0]
+                if positive_window.size >= 2:
+                    log_slope = (
+                        np.log(positive_window[-1]) - np.log(positive_window[0])
+                    ) / float(positive_window.size - 1)
+                    step_ages = np.arange(1, tail.size + 1, dtype=float)
+                    hazard[age_100_index + 1 :] = hazard[age_100_index] * np.exp(log_slope * step_ages)
+                else:
+                    hazard[age_100_index + 1 :] = hazard[age_100_index]
+        else:
+            last_observed_age = int(np.flatnonzero(positive_mask)[-1])
+            hazard[last_observed_age + 1 :] = hazard[last_observed_age]
 
     return hazard
 
@@ -238,6 +317,10 @@ def _analytic_multiplier_exponent(
     if target == "eta":
         delta_age = attained_ages - float(start_age)
         return -((xc / epsilon) * (eta - (factor * eta)) * delta_age)
+
+    if target == "eta_shift":
+        eta_shift = (factor * eta) - eta
+        return -((xc / epsilon) * eta_shift * attained_ages)
 
     raise ValueError(f"Unsupported target: {target}")
 

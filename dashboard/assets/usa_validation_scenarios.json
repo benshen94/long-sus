@@ -1,10 +1,10 @@
 {
-  "country": "World",
   "branch_options": [
     "analytic_arm"
   ],
   "target_options": [
     "eta",
+    "eta_shift",
     "Xc"
   ],
   "factor_grids": {
@@ -17,21 +17,88 @@
       0.75,
       0.7
     ],
+    "eta_shift": [
+      1.0,
+      1.1,
+      1.2,
+      1.3,
+      1.4,
+      1.5,
+      1.6
+    ],
     "Xc": [
       1.0,
       1.1,
-      1.2
+      1.2,
+      1.3,
+      1.4,
+      1.5,
+      1.6
     ]
+  },
+  "branch_factor_grids": {
+    "sr": {
+      "eta": [
+        1.0,
+        0.95,
+        0.9,
+        0.85,
+        0.8,
+        0.75,
+        0.7
+      ],
+      "eta_shift": [
+        1.0
+      ],
+      "Xc": [
+        1.0,
+        1.1,
+        1.2
+      ]
+    },
+    "analytic_arm": {
+      "eta": [
+        1.0,
+        0.95,
+        0.9,
+        0.85,
+        0.8,
+        0.75,
+        0.7
+      ],
+      "eta_shift": [
+        1.0,
+        1.1,
+        1.2,
+        1.3,
+        1.4,
+        1.5,
+        1.6
+      ],
+      "Xc": [
+        1.0,
+        1.1,
+        1.2,
+        1.3,
+        1.4,
+        1.5,
+        1.6
+      ]
+    }
   },
   "default_branch": "analytic_arm",
   "default_target": "eta",
   "default_eta_factor": 0.8,
+  "default_eta_shift_factor": 1.2,
   "default_xc_factor": 1.1,
-  "default_analytic_preset_id": "world_period_2024_both_hazard",
-  "launch_year": 2025,
-  "projection_end_year": 2100,
   "default_threshold_age": 60,
+  "default_threshold_probability": 100,
   "default_start_rule": "absolute",
+  "default_rollout_curve": "linear",
+  "default_rollout_launch_probability": 10,
+  "default_rollout_max_probability": 50,
+  "default_rollout_ramp_years": 12,
+  "default_rollout_takeoff_years": 8,
   "default_bands": [
     {
       "start_age": 20,
@@ -49,29 +116,52 @@
       "target_share": 0.95
     }
   ],
+  "launch_year": 2025,
+  "projection_end_year": 2100,
   "presets": [
     {
       "id": "no_one",
-      "label": "No one",
+      "label": "No treatment",
+      "description": "Untreated baseline. No one ever starts treatment.",
       "uptake_mode": "threshold",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "absolute",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": []
     },
     {
       "id": "everyone",
-      "label": "Everyone",
+      "label": "Treat everyone immediately",
+      "description": "Everyone alive at launch starts immediately, and all later births are treated from birth.",
       "uptake_mode": "threshold",
       "threshold_age": 0,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "deterministic_threshold",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": []
     },
     {
       "id": "only_elderly_65plus",
-      "label": "Only elderly (65+)",
+      "label": "Treat ages 65+",
+      "description": "Only the 65+ band is eligible. Everyone in that band starts at the lower band edge.",
       "uptake_mode": "banded",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "absolute",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": [
         {
           "start_age": 65,
@@ -82,10 +172,17 @@
     },
     {
       "id": "50pct_elderly_65plus",
-      "label": "50% of elderly (65+)",
+      "label": "Treat 50% of ages 65+",
+      "description": "Only the 65+ band is eligible, and the long-run treated share in that band is 50%.",
       "uptake_mode": "banded",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "absolute",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": [
         {
           "start_age": 65,
@@ -96,10 +193,17 @@
     },
     {
       "id": "30pct_middle_40_64_plus_70pct_elderly_65plus",
-      "label": "30% middle age, 70% elderly",
+      "label": "Treat 30% of ages 40-64 and 70% of ages 65+",
+      "description": "A middle-age band targets 30% treated and the elderly band targets 70% treated.",
       "uptake_mode": "banded",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "absolute",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": [
         {
           "start_age": 40,
@@ -115,10 +219,17 @@
     },
     {
       "id": "half_population_adult_band",
-      "label": "Half of adult population",
+      "label": "Treat 50% of all adults 20+",
+      "description": "One adult band covers ages 20+ and targets a 50% treated share.",
       "uptake_mode": "banded",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "absolute",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": [
         {
           "start_age": 20,
@@ -129,10 +240,17 @@
     },
     {
       "id": "prescription_bands_absolute",
-      "label": "Prescription bands / absolute",
+      "label": "Age bands with immediate starts",
+      "description": "Three age bands use fixed treated shares. Eligible people start at the band edge instead of being spread through the band.",
       "uptake_mode": "banded",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "absolute",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": [
         {
           "start_age": 20,
@@ -153,10 +271,17 @@
     },
     {
       "id": "prescription_bands_equal_probabilities",
-      "label": "Prescription bands / equal probabilities",
+      "label": "Age bands with equal yearly start chance",
+      "description": "Three age bands use fixed treated shares, and starts are spread across ages using the same yearly start chance within each band.",
       "uptake_mode": "banded",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "equal_probabilities",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": [
         {
           "start_age": 20,
@@ -177,10 +302,17 @@
     },
     {
       "id": "prescription_bands_uniform_start_age",
-      "label": "Prescription bands / uniform start age",
+      "label": "Age bands with uniform realized start age",
+      "description": "Three age bands use fixed treated shares, and the yearly start chance is tuned so realized start ages are uniform within each band.",
       "uptake_mode": "banded",
       "threshold_age": null,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "uniform_start_age",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": [
         {
           "start_age": 20,
@@ -201,10 +333,47 @@
     },
     {
       "id": "threshold_age_60_all_eligible",
-      "label": "Threshold age 60",
+      "label": "Treat everyone from age 60 onward",
+      "description": "Threshold age 60 with 100% uptake. Everyone already age 60+ starts at launch, and younger cohorts start when they reach age 60.",
       "uptake_mode": "threshold",
       "threshold_age": 60,
+      "threshold_probability": 1.0,
       "start_rule_within_band": "deterministic_threshold",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
+      "bands": []
+    },
+    {
+      "id": "rollout_threshold_linear",
+      "label": "Rollout from age 60 with a linear popularity ramp",
+      "description": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The annual start chance rises linearly from 10% at launch to 50% after 12 years.",
+      "uptake_mode": "rollout",
+      "threshold_age": 60,
+      "threshold_probability": 1.0,
+      "start_rule_within_band": "deterministic_threshold",
+      "rollout_curve": "linear",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
+      "bands": []
+    },
+    {
+      "id": "rollout_threshold_logistic",
+      "label": "Rollout from age 60 with an S-curve popularity ramp",
+      "description": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The annual start chance follows an S-curve, rising from 10% at launch toward 50% with an 8-year takeoff.",
+      "uptake_mode": "rollout",
+      "threshold_age": 60,
+      "threshold_probability": 1.0,
+      "start_rule_within_band": "deterministic_threshold",
+      "rollout_curve": "logistic",
+      "rollout_launch_probability": 0.1,
+      "rollout_max_probability": 0.5,
+      "rollout_ramp_years": 12,
+      "rollout_takeoff_years": 8,
       "bands": []
     }
   ]

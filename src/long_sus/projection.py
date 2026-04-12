@@ -8,7 +8,11 @@ import pandas as pd
 from .config import MAX_AGE, SEXES
 from .data_sources import WppBundle
 from .specs import InterventionAsset, ProjectionState, ScenarioSpec
-from .uptake import build_start_probability_table
+from .uptake import (
+    build_start_probability_table,
+    resolve_age_bands,
+    rollout_probability_for_year,
+)
 
 
 @dataclass
@@ -31,6 +35,96 @@ def _age_series_to_array(frame: pd.DataFrame, value_column: str) -> np.ndarray:
     return values
 
 
+def _tail_population_weights(mx: float, tail_length: int) -> np.ndarray:
+    if tail_length <= 0:
+        return np.ones(1, dtype=float)
+
+    survival = float(np.exp(-max(mx, 0.0)))
+    weights = np.ones(tail_length + 1, dtype=float)
+
+    for index in range(1, len(weights)):
+        weights[index] = weights[index - 1] * survival
+
+    total = float(weights.sum())
+    if total <= 0.0:
+        return np.ones_like(weights) / len(weights)
+
+    return weights / total
+
+
+def _tail_log_hazard_slope(
+    mx: np.ndarray,
+    open_age: int,
+    lookback_years: int = 5,
+) -> float | None:
+    if open_age <= 0:
+        return None
+
+    start_age = max(0, open_age - lookback_years)
+    window = np.asarray(mx[start_age : open_age + 1], dtype=float)
+    positive_window = window[window > 0.0]
+    if positive_window.size < 2:
+        return None
+
+    return float(
+        (np.log(positive_window[-1]) - np.log(positive_window[0]))
+        / (positive_window.size - 1)
+    )
+
+
+def _is_open_age_100_bin(frame: pd.DataFrame, open_age: int) -> bool:
+    if open_age != 100:
+        return False
+
+    if frame.empty:
+        return False
+
+    return int(frame["age"].max()) == 100
+
+
+def _tail_population_weights_from_curve(mx_by_age: np.ndarray) -> np.ndarray:
+    if len(mx_by_age) == 0:
+        return np.ones(1, dtype=float)
+
+    weights = np.ones(len(mx_by_age), dtype=float)
+
+    for index in range(1, len(weights)):
+        annual_survival = float(np.exp(-max(float(mx_by_age[index - 1]), 0.0)))
+        weights[index] = weights[index - 1] * annual_survival
+
+    total = float(weights.sum())
+    if total <= 0.0:
+        return np.ones_like(weights) / len(weights)
+
+    return weights / total
+
+
+def _extend_population_tail(
+    population: np.ndarray,
+    population_frame: pd.DataFrame,
+    mortality_frame: pd.DataFrame,
+) -> np.ndarray:
+    if population_frame.empty:
+        return population
+
+    last_observed_age = int(population_frame["age"].max())
+    if last_observed_age >= MAX_AGE:
+        return population
+
+    open_age_population = float(population[last_observed_age])
+    if open_age_population <= 0.0:
+        return population
+
+    if mortality_frame.empty:
+        return population
+
+    mortality = _age_series_to_array(mortality_frame, "mx")
+    mortality = _extend_mortality_tail(mortality, mortality_frame)
+    tail_weights = _tail_population_weights_from_curve(mortality[last_observed_age:])
+    population[last_observed_age:] = open_age_population * tail_weights
+    return population
+
+
 def _extend_mortality_tail(mx: np.ndarray, frame: pd.DataFrame) -> np.ndarray:
     if frame.empty:
         return mx
@@ -39,17 +133,40 @@ def _extend_mortality_tail(mx: np.ndarray, frame: pd.DataFrame) -> np.ndarray:
     if last_observed_age >= MAX_AGE:
         return mx
 
-    mx[last_observed_age + 1 :] = mx[last_observed_age]
+    if not _is_open_age_100_bin(frame, last_observed_age):
+        mx[last_observed_age + 1 :] = mx[last_observed_age]
+        return mx
+
+    log_slope = _tail_log_hazard_slope(mx, last_observed_age)
+    if log_slope is None:
+        mx[last_observed_age + 1 :] = mx[last_observed_age]
+        return mx
+
+    for age in range(last_observed_age + 1, MAX_AGE + 1):
+        years_past_open_age = age - last_observed_age
+        mx[age] = mx[last_observed_age] * np.exp(log_slope * years_past_open_age)
+
     return mx
 
 
-def _build_population_map(frame: pd.DataFrame) -> dict[int, dict[str, np.ndarray]]:
+def _build_population_map(
+    frame: pd.DataFrame,
+    mortality_frame: pd.DataFrame,
+) -> dict[int, dict[str, np.ndarray]]:
     population_map: dict[int, dict[str, np.ndarray]] = {}
     for year, year_frame in frame.groupby("year"):
         population_map[int(year)] = {}
         for sex in SEXES:
             sex_frame = year_frame[year_frame["sex"] == sex]
-            population_map[int(year)][sex] = _age_series_to_array(sex_frame, "population")
+            year_mortality = mortality_frame[
+                (mortality_frame["year"] == int(year)) & (mortality_frame["sex"] == sex)
+            ]
+            population = _age_series_to_array(sex_frame, "population")
+            population_map[int(year)][sex] = _extend_population_tail(
+                population,
+                sex_frame,
+                year_mortality,
+            )
     return population_map
 
 
@@ -87,8 +204,8 @@ def build_variant_inputs(bundle: WppBundle, variant_name: str) -> VariantInputs:
         variant_name=variant_name,
         years=years,
         ages=ages,
-        population=_build_population_map(population_frame),
         mortality=_build_mortality_map(bundle.mortality),
+        population=_build_population_map(population_frame, bundle.mortality),
         fertility=_build_fertility_map(bundle.fertility[variant_name]),
         sex_ratio_at_birth=_build_total_map(bundle.sex_ratio_at_birth[variant_name], "sex_ratio_at_birth"),
         net_migration_total=_build_total_map(bundle.net_migration[variant_name], "net_migration"),
@@ -129,6 +246,80 @@ def _age_treated_survivors(survivors: np.ndarray) -> np.ndarray:
 
 def _sum_treated_by_age(treated: np.ndarray) -> np.ndarray:
     return treated.sum(axis=0)
+
+
+def _positive_migration_treated_share(
+    *,
+    age: int,
+    year: int,
+    scenario: ScenarioSpec,
+    current_share: float,
+) -> float:
+    if scenario.target is None:
+        return current_share
+
+    if year < scenario.launch_year:
+        return current_share
+
+    if scenario.uptake_mode == "threshold":
+        if scenario.threshold_age is None:
+            return current_share
+        if age < scenario.threshold_age:
+            return 0.0
+        return float(np.clip(scenario.threshold_probability, 0.0, 1.0))
+
+    if scenario.uptake_mode == "rollout":
+        if scenario.threshold_age is None:
+            return current_share
+        if age < scenario.threshold_age:
+            return 0.0
+        return float(np.clip(rollout_probability_for_year(scenario, year), 0.0, 1.0))
+
+    if scenario.uptake_mode != "banded":
+        return current_share
+
+    for band in resolve_age_bands(scenario.bands, max_age=MAX_AGE):
+        if age < band.start_age or age > band.end_age:
+            continue
+
+        if scenario.start_rule_within_band == "absolute":
+            return band.conditional_share
+
+        return current_share
+
+    return current_share
+
+
+def _scenario_rollout_metadata(scenario: ScenarioSpec) -> dict[str, float | int | str]:
+    return {
+        "rollout_curve": scenario.rollout_curve,
+        "rollout_launch_probability": scenario.rollout_launch_probability,
+        "rollout_max_probability": scenario.rollout_max_probability,
+        "rollout_ramp_years": scenario.rollout_ramp_years,
+        "rollout_takeoff_years": scenario.rollout_takeoff_years,
+    }
+
+
+def _add_positive_migration_to_treated(
+    *,
+    treated: np.ndarray,
+    age: int,
+    treated_delta: float,
+    treated_by_age: float,
+) -> None:
+    if treated_delta <= 0.0:
+        return
+
+    if treated_by_age > 0.0:
+        per_start_share = treated[:, age] / treated_by_age
+        treated[:, age] += treated_delta * per_start_share
+        return
+
+    row_index = min(age, treated.shape[0] - 1)
+    if row_index < 0:
+        return
+
+    treated[row_index, age] += treated_delta
 
 
 def _blank_projection_state(
@@ -193,6 +384,8 @@ def derive_migration_residuals(inputs: VariantInputs) -> dict[int, dict[str, np.
 def _apply_migration_residual(
     state: ProjectionState,
     residual: dict[str, np.ndarray] | None,
+    scenario: ScenarioSpec,
+    year: int,
 ) -> ProjectionState:
     if residual is None:
         return state
@@ -205,11 +398,29 @@ def _apply_migration_residual(
         treated_by_age = _sum_treated_by_age(updated_treated[sex])
 
         for age in range(len(delta)):
+            total = updated_untreated[sex][age] + treated_by_age[age]
+
             if delta[age] >= 0.0:
-                updated_untreated[sex][age] += delta[age]
+                current_share = treated_by_age[age] / total if total > 0.0 else 0.0
+                treated_share = _positive_migration_treated_share(
+                    age=age,
+                    year=year + 1,
+                    scenario=scenario,
+                    current_share=current_share,
+                )
+                treated_share = float(np.clip(treated_share, 0.0, 1.0))
+                treated_delta = delta[age] * treated_share
+                untreated_delta = delta[age] - treated_delta
+
+                updated_untreated[sex][age] += untreated_delta
+                _add_positive_migration_to_treated(
+                    treated=updated_treated[sex],
+                    age=age,
+                    treated_delta=treated_delta,
+                    treated_by_age=treated_by_age[age],
+                )
                 continue
 
-            total = updated_untreated[sex][age] + treated_by_age[age]
             if total <= 0.0:
                 continue
 
@@ -261,6 +472,7 @@ def _record_population_rows(
     state: ProjectionState,
 ) -> list[dict[str, float | int | str]]:
     rows: list[dict[str, float | int | str]] = []
+    rollout_metadata = _scenario_rollout_metadata(scenario)
 
     for sex in SEXES:
         treated_by_age = _sum_treated_by_age(state.treated[sex])
@@ -281,6 +493,7 @@ def _record_population_rows(
                     "launch_year": scenario.launch_year,
                     "uptake_mode": scenario.uptake_mode,
                     "threshold_age": scenario.threshold_age if scenario.threshold_age is not None else -1,
+                    "threshold_probability": scenario.threshold_probability,
                     "start_rule_within_band": scenario.start_rule_within_band,
                     "target": scenario.target or "none",
                     "factor": scenario.factor,
@@ -291,6 +504,7 @@ def _record_population_rows(
                     "population_count": float(total[age]),
                     "treated_population_count": float(treated_by_age[age]),
                     "untreated_population_count": float(state.untreated[sex][age]),
+                    **rollout_metadata,
                 }
             )
 
@@ -304,6 +518,7 @@ def _record_summary_row(
     births: float,
     deaths: float,
 ) -> dict[str, float | int | str]:
+    rollout_metadata = _scenario_rollout_metadata(scenario)
     male_total = state.untreated["male"] + _sum_treated_by_age(state.treated["male"])
     female_total = state.untreated["female"] + _sum_treated_by_age(state.treated["female"])
     combined = male_total + female_total
@@ -328,6 +543,7 @@ def _record_summary_row(
         "launch_year": scenario.launch_year,
         "uptake_mode": scenario.uptake_mode,
         "threshold_age": scenario.threshold_age if scenario.threshold_age is not None else -1,
+        "threshold_probability": scenario.threshold_probability,
         "start_rule_within_band": scenario.start_rule_within_band,
         "target": scenario.target or "none",
         "factor": scenario.factor,
@@ -343,6 +559,7 @@ def _record_summary_row(
         "median_age": _weighted_median_age(combined),
         "old_age_share_60_plus": old_age_share_60,
         "old_age_share_65_plus": old_age_share_65,
+        **rollout_metadata,
     }
 
 
@@ -498,6 +715,8 @@ def project_scenario(
             next_state = _apply_migration_residual(
                 state=next_state,
                 residual=inputs.migration_residual.get(year),
+                scenario=scenario,
+                year=year,
             )
 
         state = next_state

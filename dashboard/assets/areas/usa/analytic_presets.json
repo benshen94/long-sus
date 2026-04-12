@@ -1,0 +1,27 @@
+{
+  "country": "USA",
+  "default_preset_id": "usa_period_2024_both_hazard",
+  "presets": [
+    {
+      "id": "usa_period_2024_both_hazard",
+      "label": "USA 2024 Hazard Fit",
+      "country": "USA",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5381235490098706,
+        "beta": 56.002966428670156,
+        "epsilon": 52.06264843109282,
+        "Xc": 19.31477878828924
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 840,
+      "h_ext": 0.00012390528181655197,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.21013992970292059."
+    }
+  ]
+}

@@ -42,8 +42,13 @@ FIRST_AVAILABLE_YEAR = 1950
 
 COUNTRIES = {
     "world": {"label": "World", "location_id": 900},
+    "china": {"label": "China", "location_id": 156},
+    "india": {"label": "India", "location_id": 356},
+    "israel": {"label": "Israel", "location_id": 376},
     "south_africa": {"label": "South Africa", "location_id": 710},
     "italy": {"label": "Italy", "location_id": 380},
+    "brazil": {"label": "Brazil", "location_id": 76},
+    "nigeria": {"label": "Nigeria", "location_id": 566},
     "uganda": {"label": "Uganda", "location_id": 800},
     "usa": {"label": "USA", "location_id": 840},
 }

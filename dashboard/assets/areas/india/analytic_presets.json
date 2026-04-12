@@ -1,0 +1,27 @@
+{
+  "country": "India",
+  "default_preset_id": "india_period_2024_both_hazard",
+  "presets": [
+    {
+      "id": "india_period_2024_both_hazard",
+      "label": "India 2024 Hazard Fit",
+      "country": "India",
+      "gender": "both",
+      "data_type": "period",
+      "year": 2024,
+      "fit_target": "hazard",
+      "source": "baseline_fits/country_baseline_fits_2024.json",
+      "params": {
+        "eta": 0.5373476852708058,
+        "beta": 54.75,
+        "epsilon": 45.51327473607405,
+        "Xc": 17.0
+      },
+      "age_start": 30,
+      "age_end": 100,
+      "location_id": 356,
+      "h_ext": 0.0006694246828243151,
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.09000624076280836."
+    }
+  ]
+}

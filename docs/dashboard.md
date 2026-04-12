@@ -13,8 +13,9 @@ Choose which intervention engine to use:
 ### Target
 
 Choose whether the drug changes:
-- `eta`: production slope slows after treatment start, without decreasing accumulated production
-- `Xc`: the critical threshold jumps immediately at treatment start
+- `eta`: the rate of aging, or damage production, slows after treatment start
+- `eta_shift`: an immediate eta shift after treatment start, with `eta_new = eta_old * factor`
+- `Xc`: robustness increases, which rectangularizes the survival curve
 
 ### Factor
 
@@ -22,7 +23,7 @@ In the `sr` branch, this selects the precomputed surface:
 - `eta`: `1.00x`, `0.95x`, `0.90x`, `0.85x`, `0.80x`, `0.75x`, `0.70x`
 - `Xc`: `1.00x`, `1.10x`, `1.20x`
 
-In the `analytic_arm` branch, this is a positive numeric input.
+In the `analytic_arm` branch, the built-in dashboard options now run through `1.60x`.
 
 ### Heterogeneity
 
@@ -61,14 +62,14 @@ $$
 
 ### Uptake mode
 
-- `threshold`: everyone above one age starts deterministically
-- `banded`: use age bands with one of the PDF start rules inside each band
+- `threshold`: pick one cutoff age and one fixed treated share `p`
+- `banded`: use age bands, each with its own treated share
 
 ### Start rule inside band
 
 - `absolute`: the band share starts at the lower edge of the band
-- `equal_probabilities`: constant yearly start probability across the band
-- `uniform_start_age`: yearly start probabilities tuned so realized start age is uniform across the band
+- `equal_probabilities`: untreated people inside the band all face the same yearly chance to start
+- `uniform_start_age`: yearly start probabilities are tuned so realized start ages are uniform across the band
 
 ## Main plots
 

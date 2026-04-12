@@ -3,11 +3,14 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>World Analytic Longevity Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260407b">
+    <link rel="stylesheet" href="./styles.css?v=20260412e">
     <script src="./vendor/plotly-2.35.2.min.js"></script>
   </head>
   <body>
@@ -17,11 +20,34 @@
           <p class="eyebrow">World analytic default</p>
           <h1>Longevity intervention dashboard</h1>
           <p class="rail-copy">
-            The default viewer uses world WPP demography and analytic hazard multipliers from the
-            baseline-fit catalog. Different intervention plans still mix by treatment start age.
+            Choose an area and the dashboard swaps the full WPP demography bundle for that place:
+            population, mortality, fertility, migration, and the matching analytic hazard fit.
           </p>
           <div class="status-row">
             <span class="status-chip" id="load-status">Loading</span>
+          </div>
+          <div class="area-selector intro-field">
+            <div class="field-head">
+              <span>Country selection</span>
+            </div>
+            <p class="rule-note">
+              Start on the map, hover supported countries, and click to switch. If you prefer scanning,
+              flip to the continent list.
+            </p>
+            <div class="mode-toggle" id="area-view-toggle" aria-label="Country selection view">
+              <button type="button" class="mode-pill is-active" data-area-view="map">Map view</button>
+              <button type="button" class="mode-pill" data-area-view="list">List view</button>
+            </div>
+            <div class="area-surface" id="area-map-panel">
+              <div class="area-map" id="area-map"></div>
+            </div>
+            <div class="area-surface" id="area-list-panel" hidden>
+              <div class="area-list" id="area-list"></div>
+            </div>
+            <label class="field" hidden>
+              <span>Area</span>
+              <select id="area-select"></select>
+            </label>
           </div>
           <div class="branch-toggle" aria-label="Intervention branch">
             <button type="button" class="branch-pill is-active">Analytic arm</button>
@@ -39,7 +65,7 @@
 
           <label class="field">
             <span class="field-head">
-              <span>Uptake mode</span>
+              <span>Intervention strategy</span>
               <button
                 type="button"
                 class="info-button"
@@ -48,16 +74,26 @@
                 aria-controls="uptake-mode-help"
               >i</button>
             </span>
+            <p class="rule-note">
+              Threshold uses one cutoff age plus a fixed treated share. Age bands gives each age range
+              its own treated share. Rollout keeps one eligibility age but lets take-up rise after launch.
+            </p>
+            <div class="mode-toggle" id="uptake-mode-toggle" aria-label="Intervention strategy">
+              <button type="button" class="mode-pill" data-uptake-mode="threshold">Threshold</button>
+              <button type="button" class="mode-pill" data-uptake-mode="banded">Age bands</button>
+              <button type="button" class="mode-pill" data-uptake-mode="rollout">Rollout</button>
+            </div>
             <p class="rule-note inline-help" id="uptake-mode-help" hidden></p>
-            <select id="uptake-mode">
+            <select id="uptake-mode" hidden>
               <option value="threshold">Threshold</option>
               <option value="banded">Banded</option>
+              <option value="rollout">Rollout</option>
             </select>
           </label>
 
-          <label class="field">
+          <label class="field" id="preset-field">
             <span class="field-head">
-              <span>Intervention plan</span>
+              <span>Age-band template</span>
               <button
                 type="button"
                 class="info-button"
@@ -70,13 +106,95 @@
             <select id="preset-select"></select>
           </label>
 
+          <div class="field-grid two-up" id="threshold-settings">
+            <label class="field" id="threshold-field">
+              <span id="threshold-age-label">Threshold age</span>
+              <input id="threshold-age" type="number" min="0" max="170" step="1" value="60">
+            </label>
+
+            <label class="field" id="threshold-probability-field">
+              <span>Probability of taking (%)</span>
+              <input id="threshold-probability" type="number" min="0" max="100" step="1" value="100">
+            </label>
+          </div>
+
+          <div class="field-grid two-up" id="rollout-settings" hidden>
+            <label class="field">
+              <span>Launch-year annual chance (%)</span>
+              <input id="rollout-launch-probability" type="number" min="0" max="100" step="1" value="10">
+            </label>
+
+            <label class="field">
+              <span>Long-run annual cap (%)</span>
+              <input id="rollout-max-probability" type="number" min="0" max="100" step="1" value="50">
+            </label>
+          </div>
+
+          <label class="field" id="rollout-curve-field" hidden>
+            <span>Rollout curve</span>
+            <select id="rollout-curve">
+              <option value="linear">Linear popularity ramp</option>
+              <option value="logistic">Logistic S-curve</option>
+            </select>
+          </label>
+
+          <div class="field-grid two-up">
+            <label class="field" id="rollout-ramp-years-field" hidden>
+              <span>Years to cap</span>
+              <input id="rollout-ramp-years" type="number" min="1" max="100" step="1" value="12">
+            </label>
+
+            <label class="field" id="rollout-takeoff-years-field" hidden>
+              <span>Takeoff year after launch</span>
+              <input id="rollout-takeoff-years" type="number" min="1" max="100" step="1" value="8">
+            </label>
+          </div>
+
+          <label class="field" id="start-rule-field">
+            <span>Start rule inside band</span>
+            <select id="start-rule">
+              <option value="absolute">Immediate at band edge</option>
+              <option value="equal_probabilities">Equal yearly start chance</option>
+              <option value="uniform_start_age">Uniform realized start age</option>
+            </select>
+          </label>
+
+          <div class="rule-panel" id="band-editor">
+            <p class="field-label">Age-band target shares</p>
+            <div class="band-input-grid">
+              <label class="band-input">
+                <span>Ages 20-39</span>
+                <input id="band-20-39" type="number" min="0" max="100" step="1" value="35">
+              </label>
+              <label class="band-input">
+                <span>Ages 40-64</span>
+                <input id="band-40-64" type="number" min="0" max="100" step="1" value="65">
+              </label>
+              <label class="band-input">
+                <span>Ages 65+</span>
+                <input id="band-65-plus" type="number" min="0" max="100" step="1" value="95">
+              </label>
+            </div>
+            <p class="rule-note" id="scheme-explainer"></p>
+          </div>
+
           <label class="field" hidden>
             <span>Branch</span>
             <select id="branch-select"></select>
           </label>
 
           <label class="field">
-            <span>Target</span>
+            <span class="field-head">
+              <span>Type of intervention</span>
+              <button
+                type="button"
+                class="info-button"
+                id="target-info-toggle"
+                aria-expanded="false"
+                aria-controls="target-help"
+              >i</button>
+            </span>
+            <p class="rule-note inline-help" id="target-help" hidden></p>
             <select id="target-select"></select>
           </label>
 
@@ -86,8 +204,18 @@
           </label>
 
           <label class="field" id="factor-input-field">
-            <span>Factor</span>
-            <input id="factor-input" type="number" min="0.01" step="0.01" value="0.80">
+            <span class="field-head">
+              <span>Intervention factor</span>
+              <button
+                type="button"
+                class="info-button"
+                id="factor-info-toggle"
+                aria-expanded="false"
+                aria-controls="factor-help"
+              >i</button>
+            </span>
+            <p class="rule-note inline-help" id="factor-help" hidden></p>
+            <input id="factor-input" type="number" min="0.50" max="1.60" step="0.01" value="0.80">
           </label>
 
           <label class="field" id="hetero-field" hidden>
@@ -109,39 +237,6 @@
             <span>Projection end year</span>
             <select id="projection-end-year"></select>
           </label>
-
-          <label class="field" id="threshold-field">
-            <span>Threshold age</span>
-            <input id="threshold-age" type="number" min="0" max="100" value="60">
-          </label>
-
-          <label class="field" id="start-rule-field">
-            <span>Start rule inside band</span>
-            <select id="start-rule">
-              <option value="absolute">Absolute</option>
-              <option value="equal_probabilities">Equal probabilities</option>
-              <option value="uniform_start_age">Uniform start age</option>
-            </select>
-          </label>
-
-          <div class="rule-panel" id="band-editor">
-            <p class="field-label">Band editor</p>
-            <div class="band-input-grid">
-              <label class="band-input">
-                <span>20-39</span>
-                <input id="band-20-39" type="number" min="0" max="100" step="1" value="35">
-              </label>
-              <label class="band-input">
-                <span>40-64</span>
-                <input id="band-40-64" type="number" min="0" max="100" step="1" value="65">
-              </label>
-              <label class="band-input">
-                <span>65+</span>
-                <input id="band-65-plus" type="number" min="0" max="100" step="1" value="95">
-              </label>
-            </div>
-            <p class="rule-note" id="scheme-explainer"></p>
-          </div>
         </section>
 
         <section class="panel">
@@ -165,7 +260,7 @@
           </label>
 
           <label class="field">
-            <span>Comparison target</span>
+            <span>Comparison intervention</span>
             <select id="compare-target-select"></select>
           </label>
 
@@ -176,7 +271,7 @@
 
           <label class="field" id="compare-factor-input-field">
             <span>Comparison factor</span>
-            <input id="compare-factor-input" type="number" min="0.01" step="0.01" value="1.00">
+            <input id="compare-factor-input" type="number" min="0.50" max="1.60" step="0.01" value="1.00">
           </label>
 
           <label class="field" id="compare-hetero-field" hidden>
@@ -196,12 +291,23 @@
           <div class="panel-head">
             <p class="eyebrow">Exports</p>
             <h2>Take the data out</h2>
+            <div class="field-head">
+              <button
+                type="button"
+                class="info-button"
+                id="exports-info-toggle"
+                aria-expanded="false"
+                aria-controls="exports-help"
+              >i</button>
+            </div>
+            <p class="rule-note inline-help" id="exports-help" hidden></p>
           </div>
 
           <div class="action-stack">
-            <button id="export-scenario-csv" type="button">Export population CSV</button>
+            <button id="export-scenario-csv" type="button">Export detailed population CSV</button>
+            <button id="export-pyramids-csv" type="button">Export all-years age CSV</button>
             <button id="export-summary-csv" type="button">Export summary CSV</button>
-            <button id="export-pyramid-image" type="button">Export current pyramid</button>
+            <button id="export-pyramid-image" type="button">Export current view</button>
             <button id="reset-scenario" type="button" class="ghost">Reset defaults</button>
           </div>
         </section>
@@ -211,10 +317,10 @@
         <header class="hero">
           <div class="hero-copy">
             <p class="eyebrow">Interactive validation</p>
-            <h2>Who starts treatment, when they start, and which parameter moves all matter.</h2>
+            <h2>Who starts treatment. When they start. Which type of intervention?</h2>
             <p>
-              The browser runs the yearly projection directly from world demography plus the analytic
-              hazard formulas. Different intervention plans still mix by treatment start age.
+              Build the intervention directly in the browser. The dashboard recomputes the yearly
+              projection from the selected area's demography and the analytic hazard model.
             </p>
           </div>
           <div class="hero-metrics" id="hero-metrics"></div>
@@ -222,8 +328,15 @@
 
         <section class="timeline-bar">
           <div class="timeline-copy">
-            <p class="eyebrow">Pyramid year</p>
+            <p class="eyebrow">Population view year</p>
             <strong id="year-label">2075</strong>
+          </div>
+          <div class="timeline-view-toggle">
+            <p class="timeline-toggle-label">Population view</p>
+            <div class="mode-toggle" id="population-view-toggle" aria-label="Population view">
+              <button type="button" class="mode-pill is-active" data-population-view="distribution">Age distribution</button>
+              <button type="button" class="mode-pill" data-population-view="pyramid">Pyramid</button>
+            </div>
           </div>
           <input id="year-slider" type="range" min="2024" max="2100" value="2075">
         </section>
@@ -287,6 +400,6 @@
       </main>
     </div>
 
-    <script type="module" src="./app.mjs?v=20260407b"></script>
+    <script type="module" src="./app.mjs?v=20260412e"></script>
   </body>
 </html>
