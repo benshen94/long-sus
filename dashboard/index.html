@@ -10,14 +10,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260412f">
+    <link rel="stylesheet" href="./styles.css?v=20260412g">
     <script src="./vendor/plotly-2.35.2.min.js"></script>
   </head>
   <body>
     <div class="page-shell" data-page-shell>
       <aside class="control-rail">
         <div class="rail-intro">
-          <p class="eyebrow">World analytic default</p>
           <h1>Longevity intervention dashboard</h1>
           <p class="rail-copy">
             Choose an area and the dashboard swaps the full WPP demography bundle for that place:
@@ -28,12 +27,8 @@
           </div>
           <div class="area-selector intro-field">
             <div class="field-head">
-              <span>Country selection</span>
+              <strong>Country selection</strong>
             </div>
-            <p class="rule-note">
-              Start on the map, hover supported countries, and click to switch. If you prefer scanning,
-              flip to the continent list.
-            </p>
             <div class="mode-toggle" id="area-view-toggle" aria-label="Country selection view">
               <button type="button" class="mode-pill is-active" data-area-view="map">Map view</button>
               <button type="button" class="mode-pill" data-area-view="list">List view</button>
@@ -49,6 +44,27 @@
               <select id="area-select"></select>
             </label>
           </div>
+          <label class="field intro-field">
+            <span class="field-head">
+              <span>Migration</span>
+              <button
+                type="button"
+                class="info-button"
+                id="migration-info-toggle"
+                aria-expanded="false"
+                aria-controls="migration-help"
+              >i</button>
+            </span>
+            <p class="rule-note inline-help" id="migration-help" hidden></p>
+            <div class="mode-toggle" id="migration-mode-toggle" aria-label="Migration mode">
+              <button type="button" class="mode-pill is-active" data-migration-mode="off">Without migration</button>
+              <button type="button" class="mode-pill" data-migration-mode="on">With migration</button>
+            </div>
+            <select id="migration-mode" hidden>
+              <option value="off">Without migration</option>
+              <option value="on">With migration</option>
+            </select>
+          </label>
           <div class="branch-toggle" aria-label="Intervention branch">
             <button type="button" class="branch-pill is-active">Analytic arm</button>
             <button type="button" class="branch-pill" disabled>Simulation</button>
@@ -398,22 +414,34 @@
               <div class="plot-surface" id="old-age-share-chart"></div>
             </article>
 
-            <article class="plot-frame wide">
+            <article class="plot-frame wide heatmap-frame is-collapsed">
               <div class="plot-header">
                 <p class="eyebrow">Timing</p>
-                <h3>Treated share heatmap</h3>
+                <div class="plot-title-row">
+                  <h3>Treated share heatmap</h3>
+                  <button
+                    id="heatmap-toggle"
+                    type="button"
+                    class="ghost compact-toggle"
+                    aria-expanded="false"
+                    aria-controls="treated-heatmap-panel"
+                  >Show heatmap</button>
+                </div>
                 <p class="plot-note">
                   Each cell is the treated share for one age in one year. A solid block means those ages
                   were already eligible at launch. A diagonal edge means later cohorts age into eligibility.
                 </p>
               </div>
-              <div class="plot-surface" id="treated-heatmap-chart"></div>
+              <div class="plot-surface" id="treated-heatmap-panel" hidden>
+                <div class="plot-surface-inner" id="treated-heatmap-chart"></div>
+              </div>
             </article>
 
             <article class="plot-frame wide">
               <div class="plot-header">
                 <p class="eyebrow">SR cohort view</p>
                 <h3>Survival curves</h3>
+                <p class="plot-note">Compare scenario survival curve to baseline.</p>
               </div>
               <div class="plot-surface" id="survival-chart"></div>
             </article>
@@ -424,6 +452,6 @@
       </main>
     </div>
 
-    <script type="module" src="./app.mjs?v=20260412f"></script>
+    <script type="module" src="./app.mjs?v=20260412g"></script>
   </body>
 </html>

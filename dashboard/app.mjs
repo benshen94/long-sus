@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260412f";
-import { createInterventionStore } from "./interventions.mjs?v=20260412f";
+} from "./runtime.mjs?v=20260412g";
+import { createInterventionStore } from "./interventions.mjs?v=20260412g";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260412f";
+} from "./content.mjs?v=20260412g";
 
 
 const state = {
@@ -41,6 +41,10 @@ const elements = {
   areaMap: document.getElementById("area-map"),
   areaListPanel: document.getElementById("area-list-panel"),
   areaList: document.getElementById("area-list"),
+  migrationModeToggle: document.getElementById("migration-mode-toggle"),
+  migrationMode: document.getElementById("migration-mode"),
+  migrationInfoToggle: document.getElementById("migration-info-toggle"),
+  migrationHelp: document.getElementById("migration-help"),
   presetField: document.getElementById("preset-field"),
   presetInfoToggle: document.getElementById("preset-info-toggle"),
   presetHelp: document.getElementById("preset-help"),
@@ -110,6 +114,9 @@ const elements = {
   comparePyramidChart: document.getElementById("compare-pyramid-chart"),
   totalPopulationChart: document.getElementById("total-population-chart"),
   oldAgeShareChart: document.getElementById("old-age-share-chart"),
+  heatmapToggle: document.getElementById("heatmap-toggle"),
+  heatmapPanel: document.getElementById("treated-heatmap-panel"),
+  heatmapFrame: document.querySelector(".heatmap-frame"),
   treatedHeatmapChart: document.getElementById("treated-heatmap-chart"),
   survivalChart: document.getElementById("survival-chart"),
   exportScenarioCsv: document.getElementById("export-scenario-csv"),
@@ -138,6 +145,10 @@ const mainViewButtons = elements.mainViewToggle
 
 const areaViewButtons = elements.areaViewToggle
   ? [...elements.areaViewToggle.querySelectorAll("[data-area-view]")]
+  : [];
+
+const migrationModeButtons = elements.migrationModeToggle
+  ? [...elements.migrationModeToggle.querySelectorAll("[data-migration-mode]")]
   : [];
 
 const TARGET_LABELS = {
@@ -203,6 +214,16 @@ function formatPercent(value) {
 
 function formatSharePercent(value) {
   return `${Math.round(Number(value) * 100)}%`;
+}
+
+
+function slugify(value) {
+  return `${value || ""}`
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
 }
 
 
@@ -365,12 +386,27 @@ function renderAreaMap() {
 
   elements.areaMap.__areaClickBound = true;
   elements.areaMap.on("plotly_click", async (event) => {
+    elements.areaMap.__lastAreaPointClickAt = Date.now();
     const point = event?.points?.[0];
     const areaSlug = point?.customdata;
     if (!areaSlug || areaSlug === state.activeArea?.slug) {
       return;
     }
     await selectArea(areaSlug);
+  });
+
+  elements.areaMap.addEventListener("click", async () => {
+    const lastPointClickAt = Number(elements.areaMap.__lastAreaPointClickAt || 0);
+    if (Date.now() - lastPointClickAt < 250) {
+      return;
+    }
+
+    const worldSlug = state.manifest?.default_area || "world";
+    if (state.activeArea?.slug === worldSlug) {
+      return;
+    }
+
+    await selectArea(worldSlug);
   });
 }
 
@@ -525,6 +561,9 @@ function refreshHelpText() {
   if (elements.uptakeModeHelp) {
     elements.uptakeModeHelp.textContent = describeUptakeMode(elements.uptakeMode.value);
   }
+  if (elements.migrationHelp) {
+    elements.migrationHelp.textContent = "Without migration removes the WPP migration residual and projects from fertility and mortality only. With migration keeps the WPP migration residual that helps match the published WPP population path.";
+  }
   if (elements.targetHelp) {
     const target = elements.targetSelect.value;
     elements.targetHelp.textContent = TARGET_HELP[target] || "";
@@ -542,7 +581,14 @@ function refreshHelpText() {
     }
   }
   if (elements.exportsHelp) {
-    elements.exportsHelp.textContent = "Detailed population CSV exports one row per year, sex, and age, with treated and untreated counts. All-years age CSV exports a compact age-by-year table that is easier to reuse for pyramids. Summary CSV exports one row per year with total population, treated share, births, deaths, median age, and old-age shares. Export current view saves the active chart as a PNG.";
+    elements.exportsHelp.innerHTML = `
+      <ul class="help-list">
+        <li>Detailed population CSV exports one row per year, sex, and age, with treated and untreated counts.</li>
+        <li>All-years age CSV exports a compact age-by-year table that is easier to reuse for pyramids.</li>
+        <li>Summary CSV exports one row per year with total population, treated share, births, deaths, median age, and old-age shares.</li>
+        <li>Export current view saves the active chart as a PNG.</li>
+      </ul>
+    `;
   }
 }
 
@@ -682,6 +728,49 @@ function syncAreaViewToggle(nextView) {
 }
 
 
+function currentMigrationMode() {
+  if (!elements.migrationMode) {
+    return "off";
+  }
+  return elements.migrationMode.value === "on" ? "on" : "off";
+}
+
+
+function syncMigrationModeToggle(nextMode) {
+  const safeMode = nextMode === "on" ? "on" : "off";
+  if (elements.migrationMode) {
+    elements.migrationMode.value = safeMode;
+  }
+
+  for (const button of migrationModeButtons) {
+    const isActive = button.dataset.migrationMode === safeMode;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", `${isActive}`);
+  }
+}
+
+
+function isHeatmapExpanded() {
+  return elements.heatmapToggle?.getAttribute("aria-expanded") === "true";
+}
+
+
+function syncHeatmapExpanded(expanded) {
+  const isExpanded = Boolean(expanded);
+
+  if (elements.heatmapToggle) {
+    elements.heatmapToggle.setAttribute("aria-expanded", `${isExpanded}`);
+    elements.heatmapToggle.textContent = isExpanded ? "Hide heatmap" : "Show heatmap";
+  }
+  if (elements.heatmapPanel) {
+    elements.heatmapPanel.hidden = !isExpanded;
+  }
+  if (elements.heatmapFrame) {
+    elements.heatmapFrame.classList.toggle("is-collapsed", !isExpanded);
+  }
+}
+
+
 function toggleInlineHelp(button, panel) {
   if (!button || !panel) {
     return;
@@ -697,6 +786,7 @@ function connectHelpButtons() {
   const bindings = [
     [elements.uptakeModeInfoToggle, elements.uptakeModeHelp],
     [elements.presetInfoToggle, elements.presetHelp],
+    [elements.migrationInfoToggle, elements.migrationHelp],
     [elements.targetInfoToggle, elements.targetHelp],
     [elements.factorInfoToggle, elements.factorHelp],
     [elements.exportsInfoToggle, elements.exportsHelp],
@@ -827,6 +917,7 @@ function currentYear() {
 
 
 function buildScenarioName({
+  country,
   schemeId,
   target,
   factor,
@@ -841,15 +932,18 @@ function buildScenarioName({
   rolloutMaxProbability,
   rolloutRampYears,
   rolloutTakeoffYears,
+  migrationMode,
 }) {
+  const countryKey = slugify(country);
+  const migrationKey = migrationMode === "on" ? "with_migration" : "without_migration";
   if (target === null) {
     if (branch === "analytic_arm") {
-      return `no_one_${branch}_${analyticPresetId}`;
+      return `${countryKey}_no_one_${branch}_${analyticPresetId}_${migrationKey}`;
     }
     if (heteroMode === "on") {
-      return "no_one_hetero";
+      return `${countryKey}_no_one_hetero_${migrationKey}`;
     }
-    return "no_one";
+    return `${countryKey}_no_one_${migrationKey}`;
   }
 
   let strategyKey = schemeId;
@@ -867,11 +961,11 @@ function buildScenarioName({
 
   const factorText = Number(factor).toFixed(2);
   if (branch === "analytic_arm") {
-    return `${strategyKey}_${branch}_${analyticPresetId}_${target}_${factorText}x`;
+    return `${countryKey}_${strategyKey}_${branch}_${analyticPresetId}_${target}_${factorText}x_${migrationKey}`;
   }
 
   const heteroSuffix = heteroMode === "on" ? "_hetero" : "";
-  return `${strategyKey}_${target}_${factorText}x${heteroSuffix}`;
+  return `${countryKey}_${strategyKey}_${target}_${factorText}x${heteroSuffix}_${migrationKey}`;
 }
 
 
@@ -897,6 +991,7 @@ function buildActiveScenario() {
   const rolloutTakeoffYears = uptakeMode === "rollout"
     ? currentRolloutYears(elements.rolloutTakeoffYears, Number(state.manifest.default_rollout_takeoff_years || 8))
     : Number(state.manifest.default_rollout_takeoff_years || 8);
+  const migrationMode = currentMigrationMode();
   const bands = uptakeMode === "banded" ? buildBandsFromInputs() : [];
   const startRule = uptakeMode === "banded"
     ? normalizeBandedStartRule(elements.startRule.value)
@@ -914,6 +1009,7 @@ function buildActiveScenario() {
 
   return {
     name: buildScenarioName({
+      country: currentCountryName(),
       schemeId,
       target,
       factor,
@@ -928,6 +1024,7 @@ function buildActiveScenario() {
       rolloutMaxProbability,
       rolloutRampYears,
       rolloutTakeoffYears,
+      migrationMode,
     }),
     label,
     scheme_id: schemeId,
@@ -951,7 +1048,7 @@ function buildActiveScenario() {
     analytic_preset_id: analyticPresetId,
     persistence_rule: "once_on_stay_on",
     demo_variant: "medium",
-    migration_mode: "on",
+    migration_mode: migrationMode,
     hetero_mode: heteroMode,
   };
 }
@@ -986,9 +1083,11 @@ function buildCompareScenario() {
   const rolloutTakeoffYears = Number(
     preset.rollout_takeoff_years ?? state.manifest.default_rollout_takeoff_years ?? 8,
   );
+  const migrationMode = currentMigrationMode();
 
   return {
     name: buildScenarioName({
+      country: currentCountryName(),
       schemeId: preset.id,
       target,
       factor,
@@ -1003,6 +1102,7 @@ function buildCompareScenario() {
       rolloutMaxProbability,
       rolloutRampYears,
       rolloutTakeoffYears,
+      migrationMode,
     }),
     label: preset.label,
     scheme_id: preset.id,
@@ -1026,7 +1126,7 @@ function buildCompareScenario() {
     analytic_preset_id: analyticPresetId,
     persistence_rule: "once_on_stay_on",
     demo_variant: "medium",
-    migration_mode: "on",
+    migration_mode: migrationMode,
     hetero_mode: heteroMode,
   };
 }
@@ -1376,6 +1476,9 @@ function renderHeatmap(activeScenario) {
   if (!elements.treatedHeatmapChart) {
     return;
   }
+  if (!isHeatmapExpanded()) {
+    return;
+  }
 
   const heatmap = buildHeatmap(state.activeResult);
   const maxDisplayAge = heatmapDisplayMaxAge(activeScenario);
@@ -1516,7 +1619,9 @@ function updateUrl(activeScenario, compareScenario, selectedYear) {
   params.set("compareHetero", compareScenario.hetero_mode);
   params.set("compareAnalyticPreset", compareScenario.analytic_preset_id || "");
   params.set("areaView", currentAreaView());
+  params.set("migration", currentMigrationMode());
   params.set("populationView", currentPopulationView());
+  params.set("heatmap", isHeatmapExpanded() ? "open" : "closed");
   params.set("year", `${selectedYear}`);
   history.replaceState(null, "", `?${params.toString()}`);
 }
@@ -1533,6 +1638,9 @@ function setControlsFromUrl() {
   }
   if (params.has("areaView")) {
     syncAreaViewToggle(params.get("areaView"));
+  }
+  if (params.has("migration")) {
+    syncMigrationModeToggle(params.get("migration"));
   }
 
   if (params.has("uptake")) {
@@ -1624,6 +1732,9 @@ function setControlsFromUrl() {
   }
   if (params.has("populationView")) {
     syncPopulationViewToggle(params.get("populationView"));
+  }
+  if (params.has("heatmap")) {
+    syncHeatmapExpanded(params.get("heatmap") === "open");
   }
 }
 
@@ -1729,7 +1840,9 @@ function captureControlState() {
     analyticPreset: elements.analyticPresetSelect.value,
     compareAnalyticPreset: elements.compareAnalyticPresetSelect.value,
     areaView: currentAreaView(),
+    migrationMode: currentMigrationMode(),
     populationView: currentPopulationView(),
+    heatmapExpanded: isHeatmapExpanded(),
   };
 }
 
@@ -1818,25 +1931,29 @@ function buildAllYearsPyramidRows(result) {
 
 function connectExports() {
   elements.exportScenarioCsv.addEventListener("click", () => {
+    const activeScenario = buildActiveScenario();
     const content = rowsToCsv(state.activeResult.populationRows);
-    downloadFile("population_by_year_age.csv", content, "text/csv;charset=utf-8");
+    downloadFile(`${activeScenario.name}_population_by_year_age.csv`, content, "text/csv;charset=utf-8");
   });
 
   elements.exportPyramidsCsv.addEventListener("click", () => {
+    const activeScenario = buildActiveScenario();
     const content = rowsToCsv(buildAllYearsPyramidRows(state.activeResult));
-    downloadFile("all_years_age_distribution.csv", content, "text/csv;charset=utf-8");
+    downloadFile(`${activeScenario.name}_all_years_age_distribution.csv`, content, "text/csv;charset=utf-8");
   });
 
   elements.exportSummaryCsv.addEventListener("click", () => {
+    const activeScenario = buildActiveScenario();
     const content = rowsToCsv(state.activeResult.summaryRows);
-    downloadFile("summary.csv", content, "text/csv;charset=utf-8");
+    downloadFile(`${activeScenario.name}_summary.csv`, content, "text/csv;charset=utf-8");
   });
 
   elements.exportPyramidImage.addEventListener("click", async () => {
+    const activeScenario = buildActiveScenario();
     const viewName = currentPopulationView() === "pyramid" ? "pyramid" : "age_distribution";
     await Plotly.downloadImage(elements.pyramidChart, {
       format: "png",
-      filename: `world_analytic_${viewName}`,
+      filename: `${activeScenario.name}_${viewName}`,
       width: 1200,
       height: 900,
     });
@@ -1869,6 +1986,8 @@ function connectExports() {
     renderActivePresetOptions("banded", defaultPresetIdForMode("banded"));
     applyPresetToActiveControls(defaultPresetIdForMode("banded"));
     syncMainViewToggle("results");
+    syncMigrationModeToggle("off");
+    syncHeatmapExpanded(false);
     syncUptakeModeToggle();
     refreshHelpText();
     await rerender();
@@ -1927,6 +2046,18 @@ function connectInputs() {
         return;
       }
       syncAreaViewToggle(nextView);
+    });
+  }
+
+  for (const button of migrationModeButtons) {
+    button.addEventListener("click", async () => {
+      const nextMode = button.dataset.migrationMode;
+      if (!nextMode || nextMode === currentMigrationMode()) {
+        return;
+      }
+
+      syncMigrationModeToggle(nextMode);
+      await rerender();
     });
   }
 
@@ -2032,9 +2163,20 @@ function connectInputs() {
     elements.compareFactorInput,
     elements.compareHeteroMode,
     elements.compareAnalyticPresetSelect,
+    elements.migrationMode,
   ].forEach((element) => {
     element.addEventListener("change", rerender);
   });
+
+  if (elements.heatmapToggle) {
+    elements.heatmapToggle.addEventListener("click", () => {
+      syncHeatmapExpanded(!isHeatmapExpanded());
+      if (isHeatmapExpanded() && state.activeResult) {
+        renderHeatmap(buildActiveScenario());
+      }
+      updateUrl(buildActiveScenario(), buildCompareScenario(), currentYear());
+    });
+  }
 
   elements.yearSlider.addEventListener("input", () => {
     const selectedYear = currentYear();
@@ -2167,7 +2309,9 @@ function populateControls({ preserveSelections = false } = {}) {
 
   syncMainViewToggle(previous?.mainView || "results");
   syncAreaViewToggle(previous?.areaView || defaultAreaView());
+  syncMigrationModeToggle(previous?.migrationMode || "off");
   syncPopulationViewToggle(previous?.populationView || "distribution");
+  syncHeatmapExpanded(previous?.heatmapExpanded || false);
   renderAreaSelector();
 
   if (!preserveSelections) {

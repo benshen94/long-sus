@@ -47,13 +47,13 @@ const TARGET_COPY = {
   eta_shift: {
     title: "Rejuvenation (eta shift)",
     short: "Eta moves immediately at treatment start.",
-    description: "Eta-shift interventions apply an immediate multiplicative change to eta at treatment start.",
+    description: "Rolling back the clock - eta-shift interventions apply an immediate multiplicative change to eta at treatment start.",
     note: "In this dashboard, eta_new = eta_old * factor, so larger factors mean a larger immediate shift.",
   },
   Xc: {
     title: "Increasing robustness (Xc)",
     short: "The survival curve becomes more rectangular.",
-    description: "Xc interventions keep mortality lower until later ages and then compress deaths into a narrower late-life window.",
+    description: "Rectangularization - Xc interventions compress deaths into a narrower late-life window.",
     note: "Larger factors mean stronger robustness and more rectangularization of the survival curve.",
   },
 };
@@ -93,9 +93,9 @@ export function describeUptakeMode(mode) {
 
 export function describeRolloutCurve(curve) {
   if (curve === "logistic") {
-    return "S-curve popularity growth with a slow start, faster takeoff, and later saturation.";
+    return "Logistic rollout: annual take-up follows an S-curve with a slower start, faster middle, and later saturation.";
   }
-  return "Straight-line popularity growth from the launch-year chance to the long-run cap.";
+  return "Linear rollout: annual take-up rises in a straight line from the launch-year chance to the long-run cap.";
 }
 
 
@@ -220,18 +220,8 @@ export function renderMethodsView(container, context) {
         <div class="methods-hero-copy">
           <p class="eyebrow">Methods</p>
           <h2>How the dashboard turns a treatment rule into a population forecast.</h2>
-          <p class="methods-lead">
-            The browser combines exogenous demography with a treatment-start rule and an intervention hazard surface.
-            What changes between scenarios is not the fertility backbone, but who starts treatment, when they start,
-            and how strongly the intervention changes late-life mortality.
-          </p>
-        </div>
-        <div class="methods-hero-note">
-          <p class="methods-note-title">Reading level</p>
-          <p>
-            This tab is written for research collaborators. It stays plain-English first, then lets you open
-            technical notes when you want the exact assumptions.
-          </p>
+          <p class="methods-lead">The browser combines demography with an intervention treatment-start rule.</p>
+          <p class="methods-lead">The intervention shape comes from the SR model.</p>
         </div>
       </header>
 
@@ -243,7 +233,7 @@ export function renderMethodsView(container, context) {
         "inputs",
         "Inputs",
         "What goes in",
-        "The population backbone comes from WPP. The intervention shape comes from the analytic hazard fit or the stored SR surfaces.",
+        "The population backbone comes from WPP demography. You can include or remove migration. The intervention shape comes from the SR model.",
         `
           <div class="methods-grid">
             <div class="methods-card">
@@ -271,13 +261,13 @@ export function renderMethodsView(container, context) {
         "projection",
         "Projection loop",
         "How projection works",
-        "Each year, the browser decides who starts treatment, ages everyone forward, applies survival, adds births, and then applies migration residuals.",
+        "Each year, the browser decides who starts treatment, applies survival, ages survivors forward, adds births, and optionally adds migration.",
         `
           <div class="methods-flow">
             <div class="flow-step"><span>1</span><strong>Start</strong><p>Apply the scenario rule to untreated people who are eligible this year.</p></div>
-            <div class="flow-step"><span>2</span><strong>Survive</strong><p>Untreated people use baseline mortality. Treated people use the row that matches their treatment start age.</p></div>
-            <div class="flow-step"><span>3</span><strong>Age</strong><p>Survivors move one year forward, with the open age group staying open.</p></div>
-            <div class="flow-step"><span>4</span><strong>Births + migration</strong><p>Births come from fertility. Migration residuals keep the backbone aligned with WPP.</p></div>
+            <div class="flow-step"><span>2</span><strong>Survive</strong><p>Untreated people use baseline mortality. Treated people use the modified mortality rate according to the SR model.</p></div>
+            <div class="flow-step"><span>3</span><strong>Age</strong><p>Survivors age by one year. People already in the oldest age group stay in that oldest age group instead of leaving the model.</p></div>
+            <div class="flow-step"><span>4</span><strong>Births + migration</strong><p>Births come from fertility. If migration is turned on, the browser also applies the WPP migration residual.</p></div>
           </div>
         `,
         `
@@ -331,7 +321,7 @@ export function renderMethodsView(container, context) {
         "rollout",
         "Scenarios",
         "Rollout rules",
-        "The dashboard now exposes three distinct ways to decide who starts treatment. Threshold and age bands are age-first rules. Rollout is a popularity-over-time rule layered on top of age eligibility.",
+        "The dashboard exposes three distinct ways to decide who starts treatment. Threshold and age bands are age-first rules. Rollout is a popularity-over-time rule layered on top of age eligibility.",
         `
           <div class="methods-grid methods-grid-wide">
             <div class="methods-card methods-diagram-card">
@@ -360,17 +350,11 @@ export function renderMethodsView(container, context) {
                 <span class="diagram-axis"></span>
                 <span class="diagram-curve"></span>
               </div>
-              <p class="methods-footnote">Eligibility stays age-based, but annual take-up rises after launch.</p>
-            </div>
-          </div>
-          <div class="methods-grid">
-            <div class="methods-card">
-              <h4>Linear rollout</h4>
-              <p>Annual take-up rises in a straight line from the launch-year chance to the long-run cap.</p>
-            </div>
-            <div class="methods-card">
-              <h4>Logistic rollout</h4>
-              <p>Annual take-up follows an S-curve: slower at first, faster in the middle, then saturating later.</p>
+              <p class="methods-footnote">${timingNote}</p>
+              <ul class="methods-list">
+                <li>Linear rollout: annual take-up rises in a straight line from the launch-year chance to the long-run cap.</li>
+                <li>Logistic rollout: annual take-up follows an S-curve, slower at first, faster in the middle, then saturating later.</li>
+              </ul>
             </div>
           </div>
         `,
@@ -410,7 +394,7 @@ export function renderMethodsView(container, context) {
             </div>
             <div class="methods-card">
               <h4>Survival curves</h4>
-              <p>A cohort-level view that is most useful for comparing scenario mechanics, not for reading literal life-table levels.</p>
+              <p>Compare scenario survival curve to baseline.</p>
             </div>
           </div>
         `,
