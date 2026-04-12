@@ -324,6 +324,31 @@ h1 {
   border-color: var(--navy);
 }
 
+.stage-view-switch {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-self: start;
+  padding: 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.74);
+  border: 1px solid rgba(121, 111, 95, 0.18);
+  box-shadow: var(--shadow);
+}
+
+.stage-view-pill {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 0.72rem 1.05rem;
+  font-weight: 700;
+}
+
+.stage-view-pill.is-active {
+  background: var(--navy);
+  color: white;
+}
+
 .timeline-view-toggle {
   display: grid;
   gap: 0.3rem;
@@ -471,6 +496,284 @@ button.ghost {
   gap: 1rem;
 }
 
+#results-stage {
+  display: grid;
+  gap: 1rem;
+}
+
+.methods-stage {
+  background: color-mix(in srgb, var(--paper) 94%, white 6%);
+  border: 1px solid rgba(107, 96, 81, 0.18);
+  box-shadow: var(--shadow);
+  border-radius: 24px;
+  padding: 1.1rem;
+}
+
+.methods-stage-inner {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.methods-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.methods-hero-note,
+.methods-card,
+.methods-detail,
+.flow-step {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(248, 241, 228, 0.92));
+  border: 1px solid rgba(121, 111, 95, 0.18);
+}
+
+.methods-hero-note {
+  padding: 1rem;
+  border-radius: 18px;
+}
+
+.methods-note-title,
+.methods-card h4,
+.flow-step strong {
+  margin: 0 0 0.35rem;
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clay-deep);
+}
+
+.methods-nav {
+  position: sticky;
+  top: 1rem;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.6rem 0;
+}
+
+.methods-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.56rem 0.86rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper-strong);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.methods-section {
+  scroll-margin-top: 5rem;
+}
+
+.methods-section-copy {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.methods-section-copy h3 {
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+
+.methods-lead {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.methods-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.methods-grid.methods-grid-wide {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.methods-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: 18px;
+}
+
+.methods-card h4,
+.methods-card p,
+.methods-card ul,
+.methods-card li {
+  margin: 0;
+}
+
+.methods-card-accent {
+  background: linear-gradient(180deg, rgba(22, 49, 77, 0.05), rgba(211, 95, 61, 0.08));
+}
+
+.methods-list {
+  padding-left: 1rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.methods-footnote {
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.methods-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.flow-step {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.95rem;
+  border-radius: 18px;
+}
+
+.flow-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 999px;
+  background: var(--navy);
+  color: white;
+  font-weight: 700;
+}
+
+.flow-step p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.methods-detail {
+  border-radius: 18px;
+  padding: 0.9rem 1rem;
+}
+
+.methods-detail summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.methods-detail p {
+  margin: 0.7rem 0 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.methods-math {
+  font-family: "Instrument Serif", serif;
+  font-size: 1.04rem;
+  color: var(--ink);
+}
+
+.methods-stats {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.methods-stat-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.4fr);
+  gap: 0.7rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(121, 111, 95, 0.18);
+}
+
+.methods-stat-row dt,
+.methods-stat-row dd {
+  margin: 0;
+}
+
+.methods-stat-row dt {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.scenario-diagram {
+  position: relative;
+  min-height: 84px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(239, 232, 218, 0.95), rgba(250, 244, 234, 0.95));
+  overflow: hidden;
+}
+
+.diagram-bar,
+.diagram-band,
+.diagram-axis,
+.diagram-curve {
+  position: absolute;
+}
+
+.threshold-diagram .diagram-muted {
+  inset: auto 0 0 0;
+  height: 28px;
+  background: rgba(174, 184, 207, 0.55);
+}
+
+.threshold-diagram .diagram-active {
+  right: 0;
+  bottom: 0;
+  width: 42%;
+  height: 52px;
+  background: rgba(22, 49, 77, 0.82);
+}
+
+.banded-diagram .diagram-band {
+  inset: auto auto 0 0;
+  height: 54px;
+}
+
+.banded-diagram .diagram-band-soft {
+  left: 0;
+  width: 32%;
+  background: rgba(201, 156, 99, 0.45);
+}
+
+.banded-diagram .diagram-band-mid {
+  left: 32%;
+  width: 34%;
+  background: rgba(211, 95, 61, 0.58);
+}
+
+.banded-diagram .diagram-band-strong {
+  left: 66%;
+  width: 34%;
+  background: rgba(22, 49, 77, 0.82);
+}
+
+.rollout-diagram .diagram-axis {
+  inset: auto 10% 12px 10%;
+  height: 2px;
+  background: rgba(94, 90, 82, 0.4);
+}
+
+.rollout-diagram .diagram-curve {
+  left: 12%;
+  right: 10%;
+  bottom: 13px;
+  height: 52px;
+  border-left: 3px solid rgba(94, 90, 82, 0.3);
+  border-bottom: 3px solid transparent;
+  border-radius: 40px 6px 0 0;
+  border-top: 6px solid rgba(211, 95, 61, 0.7);
+  border-right: 6px solid rgba(22, 49, 77, 0.88);
+}
+
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
@@ -579,8 +882,15 @@ code {
   }
 
   .hero,
+  .methods-hero,
   .pyramid-grid,
   .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .methods-grid,
+  .methods-grid.methods-grid-wide,
+  .methods-flow {
     grid-template-columns: 1fr;
   }
 
@@ -613,6 +923,15 @@ code {
 
   .hero-metrics {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .methods-stage {
+    padding: 0.9rem;
+  }
+
+  .methods-stat-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
   }
 
   .plot-surface {

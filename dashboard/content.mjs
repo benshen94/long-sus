@@ -208,6 +208,11 @@ export function renderMethodsView(container, context) {
       </p>
     `
     : "";
+  const timingNote = context.activeScenario.uptake_mode === "rollout"
+    ? describeRolloutCurve(context.activeScenario.rollout_curve)
+    : context.activeScenario.uptake_mode === "banded"
+      ? "The within-band start rule changes when cohorts enter treatment even when final treated shares stay the same."
+      : "Threshold timing is simple: the entire dynamic comes from one eligibility age and one fixed start share.";
 
   const methodsMarkup = `
     <article class="methods-stage-inner">
@@ -427,7 +432,7 @@ export function renderMethodsView(container, context) {
               ${target ? target.description : "The active scenario is an untreated baseline."}
               The intervention rule determines when cohorts enter treatment, so two runs with the same biology can still produce different heatmaps and different old-age shares.
             </p>
-            <p class="methods-footnote">${describeRolloutCurve(context.activeScenario.rollout_curve)}</p>
+            <p class="methods-footnote">${timingNote}</p>
           </div>
         `,
       )}

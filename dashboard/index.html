@@ -314,89 +314,113 @@
       </aside>
 
       <main class="main-stage">
-        <header class="hero">
-          <div class="hero-copy">
-            <p class="eyebrow">Interactive validation</p>
-            <h2>Who starts treatment. When they start. Which type of intervention?</h2>
-            <p>
-              Build the intervention directly in the browser. The dashboard recomputes the yearly
-              projection from the selected area's demography and the analytic hazard model.
-            </p>
-          </div>
-          <div class="hero-metrics" id="hero-metrics"></div>
-        </header>
+        <div class="stage-view-switch" id="main-view-toggle" role="tablist" aria-label="Dashboard view">
+          <button
+            type="button"
+            class="stage-view-pill is-active"
+            data-main-view="results"
+            role="tab"
+            aria-selected="true"
+            aria-controls="results-stage"
+            tabindex="0"
+          >Results</button>
+          <button
+            type="button"
+            class="stage-view-pill"
+            data-main-view="methods"
+            role="tab"
+            aria-selected="false"
+            aria-controls="methods-stage"
+            tabindex="-1"
+          >Methods</button>
+        </div>
 
-        <section class="timeline-bar">
-          <div class="timeline-copy">
-            <p class="eyebrow">Population view year</p>
-            <strong id="year-label">2075</strong>
-          </div>
-          <div class="timeline-view-toggle">
-            <p class="timeline-toggle-label">Population view</p>
-            <div class="mode-toggle" id="population-view-toggle" aria-label="Population view">
-              <button type="button" class="mode-pill is-active" data-population-view="distribution">Age distribution</button>
-              <button type="button" class="mode-pill" data-population-view="pyramid">Pyramid</button>
-            </div>
-          </div>
-          <input id="year-slider" type="range" min="2024" max="2100" value="2075">
-        </section>
-
-        <section class="pyramid-grid">
-          <article class="plot-frame">
-            <div class="plot-header">
-              <p class="eyebrow">Active scenario</p>
-              <h3 id="active-scenario-label">Loading</h3>
-            </div>
-            <div class="plot-surface" id="pyramid-chart"></div>
-          </article>
-
-          <article class="plot-frame compare-frame">
-            <div class="plot-header">
-              <p class="eyebrow">Comparison scenario</p>
-              <h3 id="compare-scenario-label">Loading</h3>
-            </div>
-            <div class="plot-surface" id="compare-pyramid-chart"></div>
-          </article>
-        </section>
-
-        <section class="analysis-grid">
-          <article class="plot-frame">
-            <div class="plot-header">
-              <p class="eyebrow">Trajectory</p>
-              <h3>Total population</h3>
-            </div>
-            <div class="plot-surface" id="total-population-chart"></div>
-          </article>
-
-          <article class="plot-frame">
-            <div class="plot-header">
-              <p class="eyebrow">Aging</p>
-              <h3>Share age 65+</h3>
-            </div>
-            <div class="plot-surface" id="old-age-share-chart"></div>
-          </article>
-
-          <article class="plot-frame wide">
-            <div class="plot-header">
-              <p class="eyebrow">Timing</p>
-              <h3>Treated share heatmap</h3>
-              <p class="plot-note">
-                Each cell is the treated share for one age in one year. A solid block means those ages
-                were already eligible at launch. A diagonal edge means later cohorts age into eligibility.
+        <section id="results-stage">
+          <header class="hero">
+            <div class="hero-copy">
+              <p class="eyebrow">Interactive validation</p>
+              <h2>Who starts treatment. When they start. Which type of intervention?</h2>
+              <p>
+                Build the intervention directly in the browser. The dashboard recomputes the yearly
+                projection from the selected area's demography and the analytic hazard model.
               </p>
             </div>
-            <div class="plot-surface" id="treated-heatmap-chart"></div>
-          </article>
+            <div class="hero-metrics" id="hero-metrics"></div>
+          </header>
 
-          <article class="plot-frame wide">
-            <div class="plot-header">
-              <p class="eyebrow">SR cohort view</p>
-              <h3>Survival curves</h3>
+          <section class="timeline-bar">
+            <div class="timeline-copy">
+              <p class="eyebrow">Population view year</p>
+              <strong id="year-label">2075</strong>
             </div>
-            <div class="plot-surface" id="survival-chart"></div>
-          </article>
+            <div class="timeline-view-toggle">
+              <p class="timeline-toggle-label">Population view</p>
+              <div class="mode-toggle" id="population-view-toggle" aria-label="Population view">
+                <button type="button" class="mode-pill is-active" data-population-view="distribution">Age distribution</button>
+                <button type="button" class="mode-pill" data-population-view="pyramid">Pyramid</button>
+              </div>
+            </div>
+            <input id="year-slider" type="range" min="2024" max="2100" value="2075">
+          </section>
 
+          <section class="pyramid-grid">
+            <article class="plot-frame">
+              <div class="plot-header">
+                <p class="eyebrow">Active scenario</p>
+                <h3 id="active-scenario-label">Loading</h3>
+              </div>
+              <div class="plot-surface" id="pyramid-chart"></div>
+            </article>
+
+            <article class="plot-frame compare-frame">
+              <div class="plot-header">
+                <p class="eyebrow">Comparison scenario</p>
+                <h3 id="compare-scenario-label">Loading</h3>
+              </div>
+              <div class="plot-surface" id="compare-pyramid-chart"></div>
+            </article>
+          </section>
+
+          <section class="analysis-grid">
+            <article class="plot-frame">
+              <div class="plot-header">
+                <p class="eyebrow">Trajectory</p>
+                <h3>Total population</h3>
+              </div>
+              <div class="plot-surface" id="total-population-chart"></div>
+            </article>
+
+            <article class="plot-frame">
+              <div class="plot-header">
+                <p class="eyebrow">Aging</p>
+                <h3>Share age 65+</h3>
+              </div>
+              <div class="plot-surface" id="old-age-share-chart"></div>
+            </article>
+
+            <article class="plot-frame wide">
+              <div class="plot-header">
+                <p class="eyebrow">Timing</p>
+                <h3>Treated share heatmap</h3>
+                <p class="plot-note">
+                  Each cell is the treated share for one age in one year. A solid block means those ages
+                  were already eligible at launch. A diagonal edge means later cohorts age into eligibility.
+                </p>
+              </div>
+              <div class="plot-surface" id="treated-heatmap-chart"></div>
+            </article>
+
+            <article class="plot-frame wide">
+              <div class="plot-header">
+                <p class="eyebrow">SR cohort view</p>
+                <h3>Survival curves</h3>
+              </div>
+              <div class="plot-surface" id="survival-chart"></div>
+            </article>
+          </section>
         </section>
+
+        <section class="methods-stage" id="methods-stage" hidden></section>
       </main>
     </div>
 

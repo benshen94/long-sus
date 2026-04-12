@@ -519,7 +519,7 @@ function refreshHelpText() {
       elements.presetHelp.textContent = "";
     } else {
       const preset = findPreset(elements.presetSelect.value);
-      elements.presetHelp.textContent = `${presetDescription(preset)} Templates are starting points only. You can edit the band shares and start rule below.`;
+      elements.presetHelp.textContent = `${describePreset(preset)} Templates are starting points only. You can edit the band shares and start rule below.`;
     }
   }
   if (elements.uptakeModeHelp) {
@@ -1048,8 +1048,8 @@ function updateControlVisibility() {
   elements.analyticPresetField.hidden = elements.analyticPresetSelect.options.length <= 1;
 
   elements.presetField.hidden = uptakeMode !== "banded";
-  elements.thresholdSettings.hidden = uptakeMode !== "threshold";
-  elements.thresholdField.hidden = uptakeMode !== "threshold";
+  elements.thresholdSettings.hidden = uptakeMode === "banded";
+  elements.thresholdField.hidden = uptakeMode === "banded";
   elements.thresholdProbabilityField.hidden = uptakeMode !== "threshold";
   elements.rolloutSettings.hidden = uptakeMode !== "rollout";
   elements.rolloutCurveField.hidden = uptakeMode !== "rollout";
