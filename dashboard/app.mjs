@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260412g";
-import { createInterventionStore } from "./interventions.mjs?v=20260412g";
+} from "./runtime.mjs?v=20260412h";
+import { createInterventionStore } from "./interventions.mjs?v=20260412h";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260412g";
+} from "./content.mjs?v=20260412h";
 
 
 const state = {
@@ -152,7 +152,7 @@ const migrationModeButtons = elements.migrationModeToggle
   : [];
 
 const TARGET_LABELS = {
-  eta: "slowing age (eta)",
+  eta: "slow aging (eta)",
   eta_shift: "rejuvenation (eta shift)",
   Xc: "increasing robustness (Xc)",
 };
@@ -214,6 +214,26 @@ function formatPercent(value) {
 
 function formatSharePercent(value) {
   return `${Math.round(Number(value) * 100)}%`;
+}
+
+
+function renderHelpContent(text) {
+  const safeText = `${text || ""}`.trim();
+  if (!safeText) {
+    return "";
+  }
+
+  const parts = safeText
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length <= 1) {
+    return safeText;
+  }
+
+  const items = parts.map((part) => `<li>${part}</li>`).join("");
+  return `<ul class="help-list">${items}</ul>`;
 }
 
 
@@ -552,32 +572,42 @@ function currentRolloutYears(input, fallback) {
 function refreshHelpText() {
   if (elements.presetHelp) {
     if (elements.uptakeMode.value !== "banded") {
-      elements.presetHelp.textContent = "";
+      elements.presetHelp.innerHTML = "";
     } else {
       const preset = findPreset(elements.presetSelect.value);
-      elements.presetHelp.textContent = `${describePreset(preset)} Templates are starting points only. You can edit the band shares and start rule below.`;
+      elements.presetHelp.innerHTML = renderHelpContent(
+        `${describePreset(preset)} Templates are starting points only. You can edit the band shares and start rule below.`,
+      );
     }
   }
   if (elements.uptakeModeHelp) {
-    elements.uptakeModeHelp.textContent = describeUptakeMode(elements.uptakeMode.value);
+    elements.uptakeModeHelp.innerHTML = renderHelpContent(describeUptakeMode(elements.uptakeMode.value));
   }
   if (elements.migrationHelp) {
-    elements.migrationHelp.textContent = "Without migration removes the WPP migration residual and projects from fertility and mortality only. With migration keeps the WPP migration residual that helps match the published WPP population path.";
+    elements.migrationHelp.innerHTML = renderHelpContent(
+      "Without migration removes the WPP migration residual and projects from fertility and mortality only. With migration keeps the WPP migration residual that helps match the published WPP population path.",
+    );
   }
   if (elements.targetHelp) {
     const target = elements.targetSelect.value;
-    elements.targetHelp.textContent = TARGET_HELP[target] || "";
+    elements.targetHelp.innerHTML = renderHelpContent(TARGET_HELP[target] || "");
   }
   if (elements.factorHelp) {
     const target = elements.targetSelect.value;
     if (target === "eta") {
-      elements.factorHelp.textContent = "Factor multiplies eta after treatment starts. Smaller values mean slower aging.";
+      elements.factorHelp.innerHTML = renderHelpContent(
+        "Factor multiplies eta after treatment starts. Smaller values mean slower aging.",
+      );
     } else if (target === "eta_shift") {
-      elements.factorHelp.textContent = "Factor multiplies eta directly: eta_new = eta_old × factor. Larger values mean a larger immediate rejuvenation-style shift.";
+      elements.factorHelp.innerHTML = renderHelpContent(
+        "Factor multiplies eta directly: eta_new = eta_old × factor. Larger values mean a larger immediate rejuvenation-style shift.",
+      );
     } else if (target === "Xc") {
-      elements.factorHelp.textContent = "Factor multiplies Xc after treatment starts. Larger values mean stronger robustness and more rectangular survival.";
+      elements.factorHelp.innerHTML = renderHelpContent(
+        "Factor multiplies Xc after treatment starts. Larger values mean stronger robustness and more rectangular survival.",
+      );
     } else {
-      elements.factorHelp.textContent = "";
+      elements.factorHelp.innerHTML = "";
     }
   }
   if (elements.exportsHelp) {

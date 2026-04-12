@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260412g">
+    <link rel="stylesheet" href="./styles.css?v=20260412h">
     <script src="./vendor/plotly-2.35.2.min.js"></script>
   </head>
   <body>
@@ -90,10 +90,11 @@
                 aria-controls="uptake-mode-help"
               >i</button>
             </span>
-            <p class="rule-note">
-              Threshold uses one cutoff age plus a fixed treated share. Age bands gives each age range
-              its own treated share. Rollout keeps one eligibility age but lets take-up rise after launch.
-            </p>
+            <ul class="rule-note help-list">
+              <li>Threshold uses one cutoff age plus a fixed treated share.</li>
+              <li>Age bands gives each age range its own treated share.</li>
+              <li>Rollout keeps one eligibility age but lets take-up rise after launch.</li>
+            </ul>
             <div class="mode-toggle" id="uptake-mode-toggle" aria-label="Intervention strategy">
               <button type="button" class="mode-pill" data-uptake-mode="threshold">Threshold</button>
               <button type="button" class="mode-pill" data-uptake-mode="banded">Age bands</button>
@@ -452,6 +453,6 @@
       </main>
     </div>
 
-    <script type="module" src="./app.mjs?v=20260412g"></script>
+    <script type="module" src="./app.mjs?v=20260412h"></script>
   </body>
 </html>
