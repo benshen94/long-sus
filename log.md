@@ -121,3 +121,19 @@ What we changed:
 - Folded the year controls into the hero so the results header uses one compact block instead of two stacked panels.
 - Shortened the headline, tightened the hero spacing, and reduced the metric tile footprint.
 - Bumped the dashboard asset versions again so the browser loads the updated HTML, CSS, and nested modules together.
+
+### Results panels were stretching to the left rail height and mobile top controls were intrusive
+
+What the bug was:
+- The main results column was allowed to stretch vertically against the much taller left control rail, which made the summary strip and chart cards expand into large empty panels.
+- On mobile, the Results/Methods control stayed sticky at the top while the Exports trigger also lived there instead of acting like a bottom action.
+
+What it caused:
+- Desktop results showed large blocks of empty paper above and below the actual content.
+- Plot panels could reserve more height than the charts meaningfully used.
+- Mobile navigation felt awkward while scrolling, and the top controls competed with the content.
+
+What we changed:
+- Stopped the results column and inner grids from stretching vertically, then tightened the summary strip into a smaller dashboard control bar.
+- Gave the plot surfaces explicit compact heights and forced the Plotly containers to fill those surfaces.
+- Removed the mobile sticky top-bar behavior and moved the mobile Exports trigger to a fixed bottom action.
