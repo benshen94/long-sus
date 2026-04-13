@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from dataclasses import asdict
 import importlib
 import json
@@ -13,7 +14,10 @@ from scipy.optimize import curve_fit
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS_ROOT = Path(__file__).resolve().parent
 SRC_ROOT = PROJECT_ROOT / "src"
+if str(SCRIPTS_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_ROOT))
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
@@ -58,6 +62,24 @@ HIGH_AGE_WEIGHTING = {
         "age_end": 100,
         "max_multiplier": 14.0,
         "power": 2.0,
+    },
+    "brazil": {
+        "age_start": 70,
+        "age_end": 90,
+        "max_multiplier": 18.0,
+        "power": 2.2,
+    },
+    "china": {
+        "age_start": 70,
+        "age_end": 90,
+        "max_multiplier": 18.0,
+        "power": 2.2,
+    },
+    "nigeria": {
+        "age_start": 70,
+        "age_end": 90,
+        "max_multiplier": 18.0,
+        "power": 2.2,
     },
     "south_africa": {
         "age_start": 70,
@@ -305,11 +327,46 @@ def _fit_country(slug: str, country: dict[str, object], sr_fitter) -> dict[str, 
     return result
 
 
-def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    sr_fitter = _load_sr_fitter()
+def _build_argument_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Fit baseline SR parameters for supported countries.",
+    )
+    parser.add_argument(
+        "--countries",
+        nargs="+",
+        metavar="COUNTRY",
+        help="Country slugs to update, for example: brazil china nigeria",
+    )
+    return parser
 
-    payload: dict[str, object] = {
+
+def _resolve_selected_slugs(country_values: list[str] | None) -> list[str]:
+    if not country_values:
+        return list(COUNTRIES)
+
+    selected_slugs: list[str] = []
+    unknown_slugs: list[str] = []
+
+    for raw_value in country_values:
+        slug = raw_value.strip().lower().replace(" ", "_").replace("-", "_")
+        if slug in COUNTRIES:
+            selected_slugs.append(slug)
+            continue
+        unknown_slugs.append(raw_value)
+
+    if unknown_slugs:
+        supported = ", ".join(sorted(COUNTRIES))
+        unknown = ", ".join(unknown_slugs)
+        raise SystemExit(f"Unknown country slugs: {unknown}. Supported: {supported}")
+
+    return selected_slugs
+
+
+def _load_existing_payload() -> dict[str, object]:
+    if OUTPUT_JSON_PATH.exists():
+        return json.loads(OUTPUT_JSON_PATH.read_text())
+
+    return {
         "wpp_source": WPP_API_BASE,
         "fit_year": FIT_YEAR,
         "first_available_year_for_world_south_africa_italy_uganda": FIRST_AVAILABLE_YEAR,
@@ -323,13 +380,37 @@ def main() -> None:
         "countries": {},
     }
 
-    for slug, country in COUNTRIES.items():
+
+def main() -> None:
+    args = _build_argument_parser().parse_args()
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    sr_fitter = _load_sr_fitter()
+    selected_slugs = _resolve_selected_slugs(args.countries)
+    payload = _load_existing_payload()
+
+    payload["wpp_source"] = WPP_API_BASE
+    payload["fit_year"] = FIT_YEAR
+    payload["first_available_year_for_world_south_africa_italy_uganda"] = FIRST_AVAILABLE_YEAR
+    payload["population_indicator_id"] = POPULATION_INDICATOR_ID
+    payload["mortality_indicator_id"] = MORTALITY_INDICATOR_ID
+    payload["variant_id"] = MEDIAN_VARIANT_ID
+    payload["fit_config"] = {
+        key: list(value) if isinstance(value, tuple) else value
+        for key, value in FIT_CONFIG.items()
+    }
+    payload.setdefault("countries", {})
+
+    for slug in selected_slugs:
+        country = COUNTRIES[slug]
         payload["countries"][slug] = _fit_country(slug, country, sr_fitter)
 
     OUTPUT_JSON_PATH.write_text(json.dumps(payload, indent=2))
     print(OUTPUT_JSON_PATH)
 
-    diagnostic_paths = render_all_fit_diagnostics(fit_json_path=OUTPUT_JSON_PATH)
+    diagnostic_paths = render_all_fit_diagnostics(
+        fit_json_path=OUTPUT_JSON_PATH,
+        country_slugs=selected_slugs,
+    )
     for diagnostic_path in diagnostic_paths:
         print(diagnostic_path)
 

@@ -71,11 +71,15 @@ def plot_country_fit_diagnostic(country_slug: str, payload: dict[str, object]) -
 def render_all_fit_diagnostics(
     *,
     fit_json_path: Path = FIT_JSON_PATH,
+    country_slugs: list[str] | None = None,
 ) -> list[Path]:
     payload = json.loads(fit_json_path.read_text())
     output_paths: list[Path] = []
+    selected_slugs = set(country_slugs or [])
 
     for country_slug, country_payload in payload["countries"].items():
+        if selected_slugs and country_slug not in selected_slugs:
+            continue
         output_paths.append(plot_country_fit_diagnostic(country_slug, country_payload))
 
     return output_paths

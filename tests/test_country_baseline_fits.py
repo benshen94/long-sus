@@ -21,6 +21,24 @@ from long_sus.specs import ScenarioQuery
 
 
 class CountryBaselineFitTests(unittest.TestCase):
+    def test_high_age_weighting_covers_priority_countries(self) -> None:
+        from scripts.build_baseline_fits import HIGH_AGE_WEIGHTING
+
+        for slug in ("brazil", "china", "nigeria"):
+            rule = HIGH_AGE_WEIGHTING.get(slug)
+            self.assertIsNotNone(rule)
+            self.assertEqual(rule["age_start"], 70)
+            self.assertEqual(rule["age_end"], 90)
+            self.assertGreaterEqual(rule["max_multiplier"], 18.0)
+
+    def test_fit_builder_can_target_specific_countries(self) -> None:
+        from scripts.build_baseline_fits import _resolve_selected_slugs
+
+        self.assertEqual(
+            _resolve_selected_slugs(["Brazil", "china", "nigeria"]),
+            ["brazil", "china", "nigeria"],
+        )
+
     def test_supported_country_baseline_fits_validate(self) -> None:
         validate_supported_country_baseline_fits()
 

@@ -12,16 +12,16 @@
       "fit_target": "hazard",
       "source": "baseline_fits/country_baseline_fits_2024.json",
       "params": {
-        "eta": 0.6412343195286497,
-        "beta": 66.40101264151157,
-        "epsilon": 62.30269356890072,
-        "Xc": 20.81384821901318
+        "eta": 0.5373476852708058,
+        "beta": 54.75,
+        "epsilon": 39.96639354044678,
+        "Xc": 17.0
       },
       "age_start": 30,
       "age_end": 100,
       "location_id": 156,
       "h_ext": 0.000382947365884948,
-      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.1932663917763936."
+      "notes": "Loaded from country_baseline_fits_2024.json. Objective=log_rmse, score=0.16810748392910854."
     }
   ]
 }
