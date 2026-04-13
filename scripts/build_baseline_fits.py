@@ -18,7 +18,10 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from long_sus.config import WPP_API_BASE
+from long_sus.countries import list_supported_country_specs
 from long_sus.data_sources import WppApiClient
+
+from render_baseline_fit_diagnostics import render_all_fit_diagnostics
 
 
 AGEING_PACKAGES_ROOT = Path(
@@ -41,16 +44,12 @@ FIT_YEAR = 2024
 FIRST_AVAILABLE_YEAR = 1950
 
 COUNTRIES = {
-    "world": {"label": "World", "location_id": 900},
-    "china": {"label": "China", "location_id": 156},
-    "india": {"label": "India", "location_id": 356},
-    "israel": {"label": "Israel", "location_id": 376},
-    "south_africa": {"label": "South Africa", "location_id": 710},
-    "italy": {"label": "Italy", "location_id": 380},
-    "brazil": {"label": "Brazil", "location_id": 76},
-    "nigeria": {"label": "Nigeria", "location_id": 566},
-    "uganda": {"label": "Uganda", "location_id": 800},
-    "usa": {"label": "USA", "location_id": 840},
+    country.slug: {
+        "label": country.name,
+        "location_id": country.location_id,
+        "default_analytic_preset_id": country.default_analytic_preset_id,
+    }
+    for country in list_supported_country_specs()
 }
 
 HIGH_AGE_WEIGHTING = {
@@ -329,6 +328,10 @@ def main() -> None:
 
     OUTPUT_JSON_PATH.write_text(json.dumps(payload, indent=2))
     print(OUTPUT_JSON_PATH)
+
+    diagnostic_paths = render_all_fit_diagnostics(fit_json_path=OUTPUT_JSON_PATH)
+    for diagnostic_path in diagnostic_paths:
+        print(diagnostic_path)
 
 
 if __name__ == "__main__":

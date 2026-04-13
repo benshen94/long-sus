@@ -111,6 +111,38 @@ def _build_analytic_presets() -> dict[str, dict[str, object]]:
 ANALYTIC_PRESETS: dict[str, dict[str, object]] = _build_analytic_presets()
 
 
+def validate_supported_country_baseline_fits() -> None:
+    from .countries import list_supported_country_specs
+
+    missing_messages: list[str] = []
+
+    for country in list_supported_country_specs():
+        preset = ANALYTIC_PRESETS.get(country.default_analytic_preset_id)
+        if preset is None:
+            missing_messages.append(
+                f"{country.name}: missing preset {country.default_analytic_preset_id}",
+            )
+            continue
+
+        preset_country = str(preset.get("country", "")).strip()
+        preset_location_id = int(preset.get("location_id", -1))
+        if preset_country != country.name:
+            missing_messages.append(
+                f"{country.name}: preset {country.default_analytic_preset_id} points at country={preset_country}",
+            )
+        if preset_location_id != country.location_id:
+            missing_messages.append(
+                f"{country.name}: preset {country.default_analytic_preset_id} points at location_id={preset_location_id}",
+            )
+
+    if missing_messages:
+        details = "; ".join(missing_messages)
+        raise RuntimeError(f"Supported-country baseline fit validation failed: {details}")
+
+
+validate_supported_country_baseline_fits()
+
+
 def default_analytic_preset_id() -> str:
     if DEFAULT_ANALYTIC_PRESET_ID not in ANALYTIC_PRESETS:
         return LEGACY_USA_ANALYTIC_PRESET_ID
@@ -168,6 +200,27 @@ def get_analytic_preset(preset_id: str | None) -> dict[str, object]:
     if safe_preset_id not in ANALYTIC_PRESETS:
         raise KeyError(f"Unknown analytic preset: {safe_preset_id}")
     return ANALYTIC_PRESETS[safe_preset_id]
+
+
+def require_country_analytic_preset(
+    *,
+    country: str,
+    preset_id: str | None,
+) -> dict[str, object]:
+    from .countries import get_country_spec
+
+    country_spec = get_country_spec(country)
+    safe_preset_id = preset_id or country_spec.default_analytic_preset_id
+    preset = get_analytic_preset(safe_preset_id)
+
+    preset_country = str(preset.get("country", "")).strip()
+    if preset_country != country_spec.name:
+        raise ValueError(
+            f"analytic_preset_id='{safe_preset_id}' belongs to {preset_country}, "
+            f"not {country_spec.name}",
+        )
+
+    return preset
 
 
 def resolve_intervention_target(target: str | None) -> str:

@@ -16,7 +16,12 @@ from .config import (
 )
 from .countries import CountrySpec, get_country_spec, list_supported_countries as _list_supported_countries
 from .data_sources import download_country_wpp_bundle
-from .intervention_assets import ANALYTIC_BRANCH, SR_BRANCH, select_intervention_asset
+from .intervention_assets import (
+    ANALYTIC_BRANCH,
+    SR_BRANCH,
+    require_country_analytic_preset,
+    select_intervention_asset,
+)
 from .projection import VariantInputs, build_variant_inputs, project_scenario
 from .scenarios import build_validation_scheme_catalog, build_validation_scenario
 from .specs import ScenarioQuery
@@ -144,6 +149,12 @@ def _validate_query(query: ScenarioQuery) -> tuple[ScenarioQuery, CountrySpec]:
     if query.branch == SR_BRANCH and not _factor_matches_catalog(query.target, query.factor):
         raise ValueError("branch='sr' currently supports only the built-in factor grids")
 
+    if query.branch == ANALYTIC_BRANCH:
+        require_country_analytic_preset(
+            country=country_spec.name,
+            preset_id=query.analytic_preset_id,
+        )
+
     return query, country_spec
 
 
@@ -206,8 +217,12 @@ def _load_sr_intervention_grid() -> dict[tuple[str, str, float], object]:
 
 def _build_scenario(query: ScenarioQuery, country_spec: CountrySpec):
     analytic_preset_id = query.analytic_preset_id
-    if query.branch == ANALYTIC_BRANCH and analytic_preset_id is None:
-        analytic_preset_id = country_spec.default_analytic_preset_id
+    if query.branch == ANALYTIC_BRANCH:
+        analytic_preset = require_country_analytic_preset(
+            country=country_spec.name,
+            preset_id=query.analytic_preset_id,
+        )
+        analytic_preset_id = str(analytic_preset["id"])
 
     target = None if query.target == "none" else query.target
     scenario = build_validation_scenario(

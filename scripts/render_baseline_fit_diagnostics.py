@@ -25,7 +25,7 @@ def _survival_from_hazard(times: np.ndarray, hazard: np.ndarray) -> np.ndarray:
     return survival
 
 
-def _plot_country(country_slug: str, payload: dict[str, object]) -> Path:
+def plot_country_fit_diagnostic(country_slug: str, payload: dict[str, object]) -> Path:
     target_times = np.asarray(payload["target_curve"]["times"], dtype=float)
     target_hazard = np.asarray(payload["target_curve"]["values"], dtype=float)
     fitted_hazard = np.asarray(payload["fitted_curve"]["values"], dtype=float)
@@ -68,12 +68,21 @@ def _plot_country(country_slug: str, payload: dict[str, object]) -> Path:
     return output_path
 
 
-def main() -> None:
-    payload = json.loads(FIT_JSON_PATH.read_text())
-    output_paths: list[str] = []
+def render_all_fit_diagnostics(
+    *,
+    fit_json_path: Path = FIT_JSON_PATH,
+) -> list[Path]:
+    payload = json.loads(fit_json_path.read_text())
+    output_paths: list[Path] = []
 
     for country_slug, country_payload in payload["countries"].items():
-        output_paths.append(str(_plot_country(country_slug, country_payload)))
+        output_paths.append(plot_country_fit_diagnostic(country_slug, country_payload))
+
+    return output_paths
+
+
+def main() -> None:
+    output_paths = render_all_fit_diagnostics()
 
     for path in output_paths:
         print(path)

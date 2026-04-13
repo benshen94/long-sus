@@ -36,6 +36,35 @@ What we changed:
 
 ## 2026-04-13
 
+### Country-specific analytic fits existed but were not enforced as a hard rule
+
+What the bug was:
+- The project already had saved 2024 SR-fitter baseline hazard fits for all supported dashboard countries, but the runtime still tolerated implicit defaults and cross-country analytic preset mismatches.
+
+What it caused:
+- It was too easy to believe the added countries were still using a generic USA-style fallback.
+- API callers could pass an analytic preset from the wrong country without a clear fail-fast check.
+- The fitter script had a second hard-coded country list instead of inheriting the supported-country registry directly.
+
+What we changed:
+- Made the supported-country registry the source of truth for the baseline-fit builder.
+- Added startup validation that every supported country has a matching saved country-specific analytic preset with the correct location id.
+- Added query-level validation so analytic projections reject cross-country preset mismatches and always resolve to the country’s fitted preset by default.
+
+### Baseline-fit diagnostics were incomplete across supported countries
+
+What the bug was:
+- The saved country baseline-fit JSON already contained all supported countries, but the per-country diagnostic PNGs were only present for a subset of them.
+
+What it caused:
+- It was hard to visually inspect fit quality for newly added countries.
+- The fitter output looked partially finished even when the numeric fit catalog was complete.
+
+What we changed:
+- Made the baseline-fit build script render diagnostic PNGs immediately after writing the fit JSON.
+- Added a test that requires every supported country to have a corresponding `*_fit_diagnostic.png`.
+- Generated the missing diagnostics for Brazil, China, India, Israel, and Nigeria.
+
 ### Mobile dashboard chrome was crowding plots and exports stayed inline
 
 What the bug was:
@@ -64,3 +93,17 @@ What we changed:
 - Tightened the hero grid, reduced metric tile padding and height, and stopped the hero metrics from stretching vertically.
 - Reduced the year-bar padding and spacing.
 - Bumped the dashboard asset version and verified the tighter layout from a fresh browser-rendered screenshot.
+
+### Results hero still consumed too much of the first viewport
+
+What the bug was:
+- The desktop results header still spent too much vertical space on a very large multiline question and a separate year-control panel underneath it.
+
+What it caused:
+- The first viewport showed too much empty paper and pushed the actual population charts farther down than necessary.
+- The dashboard felt less like a working analysis surface and more like a landing page banner.
+
+What we changed:
+- Folded the year controls into the hero so the results header uses one compact block instead of two stacked panels.
+- Shortened the headline, tightened the hero spacing, and reduced the metric tile footprint.
+- Bumped the dashboard asset versions again so the browser loads the updated HTML, CSS, and nested modules together.
