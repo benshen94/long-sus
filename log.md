@@ -137,3 +137,18 @@ What we changed:
 - Stopped the results column and inner grids from stretching vertically, then tightened the summary strip into a smaller dashboard control bar.
 - Gave the plot surfaces explicit compact heights and forced the Plotly containers to fill those surfaces.
 - Removed the mobile sticky top-bar behavior and moved the mobile Exports trigger to a fixed bottom action.
+
+### Lower analysis panels did not align and the summary bar typography was undersized
+
+What the bug was:
+- The lower analysis cards were not sharing a consistent internal height model, so the right-hand panel could end lower than the left once its header controls took more vertical space.
+- The summary strip had been compressed too far, which made the main heading, year, slider, and metric values read too small.
+
+What it caused:
+- The dashboard looked visually off because the bottom panel row did not line up cleanly.
+- The top control surface felt underpowered and hard to scan.
+
+What we changed:
+- Switched the analysis cards to a fill layout so each panel uses the same header-plus-chart structure and aligns cleanly across the row.
+- Increased the summary strip typography, metric values, year label, numeric input sizing, and slider thickness.
+- Bumped the dashboard asset versions again so the browser loads the matching HTML, CSS, and modules together.
