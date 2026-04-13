@@ -11,6 +11,11 @@ whenever we fix a bug, append an entry to `log.md` with:
 - what it caused
 - what we changed to fix it
 
+when updating baseline SR fits:
+- always regenerate the matching `*_fit_diagnostic.png` files for every country whose fit changed
+- do not leave the fit JSON updated without refreshed diagnostic PNGs
+- if you add support for a new fitted country, include its diagnostic PNG in the same change
+
 when updating `dashboard/index.html`, `dashboard/app.mjs`, or any nested module imported by `app.mjs`:
 - bump the version on the top-level `index.html` asset URLs
 - also bump the version on nested module imports such as `./runtime.mjs?...` and `./interventions.mjs?...`
