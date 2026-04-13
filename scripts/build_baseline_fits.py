@@ -64,14 +64,14 @@ HIGH_AGE_WEIGHTING = {
         "power": 2.0,
     },
     "brazil": {
-        "age_start": 70,
-        "age_end": 90,
+        "age_start": 80,
+        "age_end": 100,
         "max_multiplier": 18.0,
         "power": 2.2,
     },
     "china": {
-        "age_start": 70,
-        "age_end": 90,
+        "age_start": 80,
+        "age_end": 100,
         "max_multiplier": 18.0,
         "power": 2.2,
     },
