@@ -385,8 +385,8 @@ export function renderMethodsView(container, context) {
               <p>Checks whether the intervention mostly changes headcount or mostly changes age structure.</p>
             </div>
             <div class="methods-card">
-              <h4>Share age 65+</h4>
-              <p>Tracks how top-heavy the population becomes over time.</p>
+              <h4>Population share</h4>
+              <p>Tracks how much of the population is at or above the chosen age cutoff over time.</p>
             </div>
             <div class="methods-card">
               <h4>Treated-share heatmap</h4>

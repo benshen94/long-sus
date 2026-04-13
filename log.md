@@ -33,3 +33,20 @@ What we changed:
 - We also updated the open-age population spread so the initial `100+` population is distributed using the extrapolated mortality curve.
 - We stopped the cohort hazard builder from dropping to zero at extreme ages just because the weighting population had numerically vanished there.
 - We added regression tests for post-100 mortality extrapolation.
+
+## 2026-04-13
+
+### Mobile dashboard chrome was crowding plots and exports stayed inline
+
+What the bug was:
+- On mobile, the Results/Methods switch was not anchored at the top of the page, the exports controls remained an inline panel, and Plotly legends and axis labels were competing for the same space.
+
+What it caused:
+- The mobile layout felt cramped before users even reached the charts.
+- Export actions took too much vertical space in the main control flow instead of behaving like a secondary action sheet.
+- Some chart legends, especially in the SR cohort view, could collide visually with axis labels on smaller screens.
+
+What we changed:
+- Moved the Results/Methods switch into a shared top bar and added a mobile exports button that opens the export panel as a modal sheet.
+- Added a new configurable population-share panel with a trajectory view and a decade-sampled composition view.
+- Reworked mobile Plotly layout settings so legends move to the top, margins expand appropriately, and axis titles keep enough separation from the legend.

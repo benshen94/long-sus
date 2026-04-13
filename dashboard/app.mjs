@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260412h";
-import { createInterventionStore } from "./interventions.mjs?v=20260412h";
+} from "./runtime.mjs?v=20260413a";
+import { createInterventionStore } from "./interventions.mjs?v=20260413a";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260412h";
+} from "./content.mjs?v=20260413a";
 
 
 const state = {
@@ -33,6 +33,7 @@ const state = {
 const elements = {
   pageShell: document.querySelector("[data-page-shell]"),
   mainViewToggle: document.getElementById("main-view-toggle"),
+  mobileExportsOpen: document.getElementById("mobile-exports-open"),
   loadStatus: document.getElementById("load-status"),
   loadError: document.getElementById("load-error"),
   areaSelect: document.getElementById("area-select"),
@@ -107,6 +108,8 @@ const elements = {
   yearSlider: document.getElementById("year-slider"),
   yearLabel: document.getElementById("year-label"),
   populationViewToggle: document.getElementById("population-view-toggle"),
+  populationShareViewToggle: document.getElementById("population-share-view-toggle"),
+  populationShareAge: document.getElementById("population-share-age"),
   activeScenarioLabel: document.getElementById("active-scenario-label"),
   compareScenarioLabel: document.getElementById("compare-scenario-label"),
   heroMetrics: document.getElementById("hero-metrics"),
@@ -123,9 +126,12 @@ const elements = {
   exportPyramidsCsv: document.getElementById("export-pyramids-csv"),
   exportSummaryCsv: document.getElementById("export-summary-csv"),
   exportsInfoToggle: document.getElementById("exports-info-toggle"),
+  exportsModalClose: document.getElementById("exports-modal-close"),
+  exportsModalBackdrop: document.getElementById("exports-modal-backdrop"),
   exportsHelp: document.getElementById("exports-help"),
   exportPyramidImage: document.getElementById("export-pyramid-image"),
   resetScenario: document.getElementById("reset-scenario"),
+  actionPanel: document.querySelector(".action-panel"),
   resultsStage: document.getElementById("results-stage"),
   methodsStage: document.getElementById("methods-stage"),
 };
@@ -137,6 +143,10 @@ const strategyButtons = elements.uptakeModeToggle
 
 const populationViewButtons = elements.populationViewToggle
   ? [...elements.populationViewToggle.querySelectorAll("[data-population-view]")]
+  : [];
+
+const populationShareViewButtons = elements.populationShareViewToggle
+  ? [...elements.populationShareViewToggle.querySelectorAll("[data-share-view]")]
   : [];
 
 const mainViewButtons = elements.mainViewToggle
@@ -696,6 +706,94 @@ function syncPopulationViewToggle(nextView) {
 }
 
 
+function currentPopulationShareView() {
+  const activeButton = populationShareViewButtons.find((button) => button.classList.contains("is-active"));
+  if (!activeButton) {
+    return "trajectory";
+  }
+  return activeButton.dataset.shareView || "trajectory";
+}
+
+
+function syncPopulationShareViewToggle(nextView) {
+  const safeView = ["trajectory", "composition"].includes(nextView) ? nextView : "trajectory";
+  for (const button of populationShareViewButtons) {
+    const isActive = button.dataset.shareView === safeView;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", `${isActive}`);
+  }
+}
+
+
+function currentPopulationShareAge() {
+  if (!elements.populationShareAge) {
+    return 65;
+  }
+
+  const maxAge = state.demography?.ages?.[state.demography.ages.length - 1] ?? 170;
+  const parsed = Number(elements.populationShareAge.value);
+  if (!Number.isFinite(parsed)) {
+    elements.populationShareAge.value = "65";
+    return 65;
+  }
+
+  const safeAge = Math.max(0, Math.min(maxAge, Math.round(parsed)));
+  elements.populationShareAge.value = `${safeAge}`;
+  return safeAge;
+}
+
+
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 720px)").matches;
+}
+
+
+function plotLegendLayout() {
+  if (isMobileViewport()) {
+    return {
+      orientation: "h",
+      x: 0,
+      xanchor: "left",
+      y: 1.12,
+      yanchor: "bottom",
+      font: { size: 11 },
+      bgcolor: "rgba(0,0,0,0)",
+    };
+  }
+
+  return {
+    orientation: "h",
+    x: 0.5,
+    xanchor: "center",
+    y: -0.28,
+    yanchor: "top",
+    bgcolor: "rgba(0,0,0,0)",
+  };
+}
+
+
+function plotMargins({ left, right, top, bottom }) {
+  if (isMobileViewport()) {
+    return {
+      l: Math.max(46, left - 10),
+      r: Math.max(10, right - 8),
+      t: Math.max(80, top + 26),
+      b: Math.max(74, bottom - 18),
+    };
+  }
+
+  return { l: left, r: right, t: top, b: bottom };
+}
+
+
+function axisTitle(text) {
+  return {
+    text,
+    standoff: isMobileViewport() ? 8 : 14,
+  };
+}
+
+
 function currentMainView() {
   const activeButton = mainViewButtons.find((button) => button.classList.contains("is-active"));
   if (!activeButton) {
@@ -798,6 +896,24 @@ function syncHeatmapExpanded(expanded) {
   if (elements.heatmapFrame) {
     elements.heatmapFrame.classList.toggle("is-collapsed", !isExpanded);
   }
+}
+
+
+function syncExportsModal(open) {
+  const shouldOpen = Boolean(open) && isMobileViewport();
+
+  if (elements.actionPanel) {
+    elements.actionPanel.dataset.mobileOpen = shouldOpen ? "true" : "false";
+  }
+  if (elements.exportsModalBackdrop) {
+    elements.exportsModalBackdrop.hidden = !shouldOpen;
+  }
+  document.body.classList.toggle("exports-modal-open", shouldOpen);
+}
+
+
+function closeExportsModal() {
+  syncExportsModal(false);
 }
 
 
@@ -1323,9 +1439,10 @@ function renderPyramid(plotElement, result, year, titleText) {
     barmode: "overlay",
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
-    margin: { l: 60, r: 30, t: 54, b: 108 },
+    margin: plotMargins({ left: 60, right: 30, top: 54, bottom: 108 }),
     xaxis: {
-      title: "Population (millions)",
+      title: axisTitle("Population (millions)"),
+      automargin: true,
       zeroline: true,
       zerolinecolor: "#5f625c",
       gridcolor: "#d7d0c2",
@@ -1333,19 +1450,13 @@ function renderPyramid(plotElement, result, year, titleText) {
       ticktext: axisTicks.map((value) => Math.abs(value).toFixed(1)),
     },
     yaxis: {
-      title: "Age",
+      title: axisTitle("Age"),
+      automargin: true,
       gridcolor: "#ece4d7",
       range: [0, maxAge],
       dtick: 20,
     },
-    legend: {
-      orientation: "h",
-      x: 0.5,
-      xanchor: "center",
-      y: -0.28,
-      yanchor: "top",
-      bgcolor: "rgba(0,0,0,0)",
-    },
+    legend: plotLegendLayout(),
     transition: { duration: 220, easing: "cubic-out" },
   }, { responsive: true, displayModeBar: false });
 }
@@ -1379,25 +1490,20 @@ function renderAgeDistribution(plotElement, result, year, titleText, palette) {
     barmode: "stack",
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
-    margin: { l: 68, r: 24, t: 54, b: 112 },
+    margin: plotMargins({ left: 68, right: 24, top: 54, bottom: 112 }),
     xaxis: {
-      title: "Age",
+      title: axisTitle("Age"),
+      automargin: true,
       gridcolor: "#ece4d7",
       range: [0, maxAge],
       dtick: 20,
     },
     yaxis: {
-      title: "Population (millions)",
+      title: axisTitle("Population (millions)"),
+      automargin: true,
       gridcolor: "#d7d0c2",
     },
-    legend: {
-      orientation: "h",
-      x: 0.5,
-      xanchor: "center",
-      y: -0.3,
-      yanchor: "top",
-      bgcolor: "rgba(0,0,0,0)",
-    },
+    legend: plotLegendLayout(),
     transition: { duration: 220, easing: "cubic-out" },
   }, { responsive: true, displayModeBar: false });
 }
@@ -1413,6 +1519,151 @@ function renderPopulationChart(plotElement, result, year, titleText, palette) {
 }
 
 
+function populationShareRows(result, thresholdAge) {
+  const years = Object.keys(result.snapshots)
+    .map((value) => Number(value))
+    .sort((left, right) => left - right);
+
+  return years.map((year) => {
+    const snapshot = result.snapshots[String(year)];
+    let totalPopulation = 0;
+    let aboveThreshold = 0;
+
+    for (let age = 0; age < snapshot.untreated.male.length; age += 1) {
+      const totalAtAge = snapshot.untreated.male[age]
+        + snapshot.untreated.female[age]
+        + snapshot.treatedByAge.male[age]
+        + snapshot.treatedByAge.female[age];
+      totalPopulation += totalAtAge;
+      if (age >= thresholdAge) {
+        aboveThreshold += totalAtAge;
+      }
+    }
+
+    const aboveShare = totalPopulation > 0 ? aboveThreshold / totalPopulation : 0;
+    return {
+      year,
+      aboveShare,
+      belowShare: 1 - aboveShare,
+    };
+  });
+}
+
+
+function decadeSampleYears(rows) {
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const firstYear = rows[0].year;
+  const lastYear = rows[rows.length - 1].year;
+  return rows
+    .map((row) => row.year)
+    .filter((year) => year === firstYear || year === lastYear || (year - firstYear) % 10 === 0);
+}
+
+
+function renderPopulationShareTrajectory(activeRows, compareRows, thresholdAge) {
+  Plotly.react(elements.oldAgeShareChart, [
+    {
+      x: activeRows.map((row) => row.year),
+      y: activeRows.map((row) => row.aboveShare * 100),
+      type: "scatter",
+      mode: "lines",
+      line: { color: "#16314d", width: 3 },
+      name: "Active scenario",
+    },
+    {
+      x: compareRows.map((row) => row.year),
+      y: compareRows.map((row) => row.aboveShare * 100),
+      type: "scatter",
+      mode: "lines",
+      line: { color: "#d35f3d", width: 3, dash: "dot" },
+      name: "Comparison scenario",
+    },
+  ], {
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    margin: plotMargins({ left: 56, right: 20, top: 48, bottom: 98 }),
+    xaxis: {
+      title: axisTitle("Year"),
+      automargin: true,
+      gridcolor: "#ece4d7",
+    },
+    yaxis: {
+      title: axisTitle(`Share age ${thresholdAge}+ (%)`),
+      automargin: true,
+      gridcolor: "#d7d0c2",
+    },
+    legend: plotLegendLayout(),
+  }, { responsive: true, displayModeBar: false });
+}
+
+
+function renderPopulationShareComposition(activeRows, compareRows, thresholdAge) {
+  const decadeYears = decadeSampleYears(activeRows);
+  const yearLabels = decadeYears.map((year) => `${year}`);
+  const activeLookup = new Map(activeRows.map((row) => [row.year, row]));
+  const compareLookup = new Map(compareRows.map((row) => [row.year, row]));
+
+  Plotly.react(elements.oldAgeShareChart, [
+    {
+      type: "bar",
+      x: yearLabels,
+      y: decadeYears.map((year) => (activeLookup.get(year)?.belowShare ?? 0) * 100),
+      name: `Active below ${thresholdAge}`,
+      marker: { color: "#aeb8cf" },
+      offsetgroup: "active",
+      legendgroup: "active_below",
+    },
+    {
+      type: "bar",
+      x: yearLabels,
+      y: decadeYears.map((year) => (activeLookup.get(year)?.aboveShare ?? 0) * 100),
+      name: `Active age ${thresholdAge}+`,
+      marker: { color: "#16314d" },
+      offsetgroup: "active",
+      legendgroup: "active_above",
+    },
+    {
+      type: "bar",
+      x: yearLabels,
+      y: decadeYears.map((year) => (compareLookup.get(year)?.belowShare ?? 0) * 100),
+      name: `Comparison below ${thresholdAge}`,
+      marker: { color: "#f0b29f" },
+      offsetgroup: "compare",
+      legendgroup: "compare_below",
+    },
+    {
+      type: "bar",
+      x: yearLabels,
+      y: decadeYears.map((year) => (compareLookup.get(year)?.aboveShare ?? 0) * 100),
+      name: `Comparison age ${thresholdAge}+`,
+      marker: { color: "#d35f3d" },
+      offsetgroup: "compare",
+      legendgroup: "compare_above",
+    },
+  ], {
+    barmode: "stack",
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    margin: plotMargins({ left: 56, right: 20, top: 48, bottom: 98 }),
+    xaxis: {
+      title: axisTitle("Year"),
+      automargin: true,
+      gridcolor: "#ece4d7",
+    },
+    yaxis: {
+      title: axisTitle("Percent of population"),
+      automargin: true,
+      gridcolor: "#d7d0c2",
+      range: [0, 100],
+    },
+    legend: plotLegendLayout(),
+  }, { responsive: true, displayModeBar: false });
+}
+
+
 function renderLineCharts() {
   if (!elements.totalPopulationChart || !elements.oldAgeShareChart) {
     return;
@@ -1420,8 +1671,9 @@ function renderLineCharts() {
 
   const activeTotal = buildLineSeries(state.activeResult, "total_population");
   const compareTotal = buildLineSeries(state.compareResult, "total_population");
-  const activeOldAge = buildLineSeries(state.activeResult, "old_age_share_65_plus");
-  const compareOldAge = buildLineSeries(state.compareResult, "old_age_share_65_plus");
+  const thresholdAge = currentPopulationShareAge();
+  const activePopulationShare = populationShareRows(state.activeResult, thresholdAge);
+  const comparePopulationShare = populationShareRows(state.compareResult, thresholdAge);
 
   Plotly.react(elements.totalPopulationChart, [
     {
@@ -1441,41 +1693,28 @@ function renderLineCharts() {
       name: "Comparison scenario",
     },
   ], {
-    title: { text: "Total population over time", font: { family: "Instrument Serif", size: 22 } },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
-    margin: { l: 56, r: 20, t: 48, b: 98 },
-    xaxis: { title: "Year", gridcolor: "#ece4d7" },
-    yaxis: { title: "Millions", gridcolor: "#d7d0c2" },
-    legend: { orientation: "h", x: 0.5, xanchor: "center", y: -0.28, yanchor: "top", bgcolor: "rgba(0,0,0,0)" },
+    margin: plotMargins({ left: 56, right: 20, top: 48, bottom: 98 }),
+    xaxis: {
+      title: axisTitle("Year"),
+      automargin: true,
+      gridcolor: "#ece4d7",
+    },
+    yaxis: {
+      title: axisTitle("Millions"),
+      automargin: true,
+      gridcolor: "#d7d0c2",
+    },
+    legend: plotLegendLayout(),
   }, { responsive: true, displayModeBar: false });
 
-  Plotly.react(elements.oldAgeShareChart, [
-    {
-      x: activeOldAge.x,
-      y: activeOldAge.y.map((value) => value * 100),
-      type: "scatter",
-      mode: "lines",
-      line: { color: "#16314d", width: 3 },
-      name: "Active scenario",
-    },
-    {
-      x: compareOldAge.x,
-      y: compareOldAge.y.map((value) => value * 100),
-      type: "scatter",
-      mode: "lines",
-      line: { color: "#d35f3d", width: 3, dash: "dot" },
-      name: "Comparison scenario",
-    },
-  ], {
-    title: { text: "Population share age 65+", font: { family: "Instrument Serif", size: 22 } },
-    paper_bgcolor: "rgba(0,0,0,0)",
-    plot_bgcolor: "rgba(0,0,0,0)",
-    margin: { l: 56, r: 20, t: 48, b: 98 },
-    xaxis: { title: "Year", gridcolor: "#ece4d7" },
-    yaxis: { title: "Percent", gridcolor: "#d7d0c2" },
-    legend: { orientation: "h", x: 0.5, xanchor: "center", y: -0.28, yanchor: "top", bgcolor: "rgba(0,0,0,0)" },
-  }, { responsive: true, displayModeBar: false });
+  if (currentPopulationShareView() === "composition") {
+    renderPopulationShareComposition(activePopulationShare, comparePopulationShare, thresholdAge);
+    return;
+  }
+
+  renderPopulationShareTrajectory(activePopulationShare, comparePopulationShare, thresholdAge);
 }
 
 
@@ -1538,9 +1777,9 @@ function renderHeatmap(activeScenario) {
     title: { text: "Share of each age-year cell treated", font: { family: "Instrument Serif", size: 22 } },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
-    margin: { l: 56, r: 30, t: 48, b: 44 },
-    xaxis: { title: "Year" },
-    yaxis: { title: "Age", range: [0, maxDisplayAge], dtick: 20 },
+    margin: plotMargins({ left: 56, right: 30, top: 48, bottom: 44 }),
+    xaxis: { title: axisTitle("Year"), automargin: true },
+    yaxis: { title: axisTitle("Age"), automargin: true, range: [0, maxDisplayAge], dtick: 20 },
   }, { responsive: true, displayModeBar: false });
 }
 
@@ -1569,13 +1808,12 @@ function renderSurvivalChart() {
       name: "Comparison scenario",
     },
   ], {
-    title: { text: "Cohort survival curves", font: { family: "Instrument Serif", size: 22 } },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
-    margin: { l: 56, r: 20, t: 48, b: 98 },
-    xaxis: { title: "Age", gridcolor: "#ece4d7" },
-    yaxis: { title: "People alive per 1000", gridcolor: "#d7d0c2" },
-    legend: { orientation: "h", x: 0.5, xanchor: "center", y: -0.28, yanchor: "top", bgcolor: "rgba(0,0,0,0)" },
+    margin: plotMargins({ left: 56, right: 20, top: 48, bottom: 98 }),
+    xaxis: { title: axisTitle("Age"), automargin: true, gridcolor: "#ece4d7" },
+    yaxis: { title: axisTitle("People alive per 1000"), automargin: true, gridcolor: "#d7d0c2" },
+    legend: plotLegendLayout(),
   }, { responsive: true, displayModeBar: false });
 }
 
@@ -1651,6 +1889,8 @@ function updateUrl(activeScenario, compareScenario, selectedYear) {
   params.set("areaView", currentAreaView());
   params.set("migration", currentMigrationMode());
   params.set("populationView", currentPopulationView());
+  params.set("shareView", currentPopulationShareView());
+  params.set("shareAge", `${currentPopulationShareAge()}`);
   params.set("heatmap", isHeatmapExpanded() ? "open" : "closed");
   params.set("year", `${selectedYear}`);
   history.replaceState(null, "", `?${params.toString()}`);
@@ -1763,6 +2003,12 @@ function setControlsFromUrl() {
   if (params.has("populationView")) {
     syncPopulationViewToggle(params.get("populationView"));
   }
+  if (params.has("shareView")) {
+    syncPopulationShareViewToggle(params.get("shareView"));
+  }
+  if (params.has("shareAge") && elements.populationShareAge) {
+    elements.populationShareAge.value = params.get("shareAge");
+  }
   if (params.has("heatmap")) {
     syncHeatmapExpanded(params.get("heatmap") === "open");
   }
@@ -1872,6 +2118,8 @@ function captureControlState() {
     areaView: currentAreaView(),
     migrationMode: currentMigrationMode(),
     populationView: currentPopulationView(),
+    populationShareView: currentPopulationShareView(),
+    populationShareAge: elements.populationShareAge?.value || "65",
     heatmapExpanded: isHeatmapExpanded(),
   };
 }
@@ -1960,22 +2208,32 @@ function buildAllYearsPyramidRows(result) {
 
 
 function connectExports() {
+  const closeModalAfterAction = () => {
+    if (!isMobileViewport()) {
+      return;
+    }
+    closeExportsModal();
+  };
+
   elements.exportScenarioCsv.addEventListener("click", () => {
     const activeScenario = buildActiveScenario();
     const content = rowsToCsv(state.activeResult.populationRows);
     downloadFile(`${activeScenario.name}_population_by_year_age.csv`, content, "text/csv;charset=utf-8");
+    closeModalAfterAction();
   });
 
   elements.exportPyramidsCsv.addEventListener("click", () => {
     const activeScenario = buildActiveScenario();
     const content = rowsToCsv(buildAllYearsPyramidRows(state.activeResult));
     downloadFile(`${activeScenario.name}_all_years_age_distribution.csv`, content, "text/csv;charset=utf-8");
+    closeModalAfterAction();
   });
 
   elements.exportSummaryCsv.addEventListener("click", () => {
     const activeScenario = buildActiveScenario();
     const content = rowsToCsv(state.activeResult.summaryRows);
     downloadFile(`${activeScenario.name}_summary.csv`, content, "text/csv;charset=utf-8");
+    closeModalAfterAction();
   });
 
   elements.exportPyramidImage.addEventListener("click", async () => {
@@ -1987,6 +2245,7 @@ function connectExports() {
       width: 1200,
       height: 900,
     });
+    closeModalAfterAction();
   });
 
   elements.resetScenario.addEventListener("click", async () => {
@@ -2018,8 +2277,13 @@ function connectExports() {
     syncMainViewToggle("results");
     syncMigrationModeToggle("off");
     syncHeatmapExpanded(false);
+    syncPopulationShareViewToggle("trajectory");
+    if (elements.populationShareAge) {
+      elements.populationShareAge.value = "65";
+    }
     syncUptakeModeToggle();
     refreshHelpText();
+    closeExportsModal();
     await rerender();
   });
 
@@ -2033,6 +2297,22 @@ function connectExports() {
     elements.compareAnalyticPresetSelect.value = state.manifest.default_analytic_preset_id;
     await rerender();
   });
+
+  if (elements.mobileExportsOpen) {
+    elements.mobileExportsOpen.addEventListener("click", () => {
+      syncExportsModal(true);
+    });
+  }
+  if (elements.exportsModalClose) {
+    elements.exportsModalClose.addEventListener("click", () => {
+      closeExportsModal();
+    });
+  }
+  if (elements.exportsModalBackdrop) {
+    elements.exportsModalBackdrop.addEventListener("click", () => {
+      closeExportsModal();
+    });
+  }
 }
 
 
@@ -2136,6 +2416,18 @@ function connectInputs() {
     });
   }
 
+  for (const button of populationShareViewButtons) {
+    button.addEventListener("click", async () => {
+      const nextView = button.dataset.shareView;
+      if (!nextView || nextView === currentPopulationShareView()) {
+        return;
+      }
+
+      syncPopulationShareViewToggle(nextView);
+      await rerender();
+    });
+  }
+
   elements.presetSelect.addEventListener("change", async () => {
     if (elements.uptakeMode.value !== "banded") {
       return;
@@ -2189,6 +2481,7 @@ function connectInputs() {
     elements.band2039,
     elements.band4064,
     elements.band65Plus,
+    elements.populationShareAge,
     elements.compareFactorSelect,
     elements.compareFactorInput,
     elements.compareHeteroMode,
@@ -2228,6 +2521,53 @@ function connectInputs() {
     );
     renderMethodsStage(buildActiveScenario());
     updateUrl(buildActiveScenario(), buildCompareScenario(), selectedYear);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+    closeExportsModal();
+  });
+}
+
+
+function connectViewportResize() {
+  let resizeFrame = 0;
+
+  window.addEventListener("resize", () => {
+    if (resizeFrame) {
+      cancelAnimationFrame(resizeFrame);
+    }
+
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = 0;
+      if (!isMobileViewport()) {
+        closeExportsModal();
+      }
+      if (!state.activeResult || !state.compareResult) {
+        return;
+      }
+
+      const selectedYear = currentYear();
+      renderPopulationChart(
+        elements.pyramidChart,
+        state.activeResult,
+        selectedYear,
+        `Active scenario · ${selectedYear}`,
+        { untreated: "#aeb8cf", treated: "#16314d" },
+      );
+      renderPopulationChart(
+        elements.comparePyramidChart,
+        state.compareResult,
+        selectedYear,
+        `Comparison scenario · ${selectedYear}`,
+        { untreated: "#f0b29f", treated: "#8e2f21" },
+      );
+      renderLineCharts();
+      renderHeatmap(buildActiveScenario());
+      renderSurvivalChart();
+    });
   });
 }
 
@@ -2325,6 +2665,10 @@ function populateControls({ preserveSelections = false } = {}) {
   elements.band2039.value = previous?.band2039 || `${Math.round(state.manifest.default_bands[0].target_share * 100)}`;
   elements.band4064.value = previous?.band4064 || `${Math.round(state.manifest.default_bands[1].target_share * 100)}`;
   elements.band65Plus.value = previous?.band65Plus || `${Math.round(state.manifest.default_bands[2].target_share * 100)}`;
+  if (elements.populationShareAge) {
+    elements.populationShareAge.max = `${state.demography.ages[state.demography.ages.length - 1]}`;
+    elements.populationShareAge.value = previous?.populationShareAge || "65";
+  }
   elements.uptakeMode.value = previous?.uptakeMode || "threshold";
   renderActivePresetOptions("banded", previous?.preset || defaultPresetIdForMode("banded"));
   syncUptakeModeToggle();
@@ -2341,7 +2685,9 @@ function populateControls({ preserveSelections = false } = {}) {
   syncAreaViewToggle(previous?.areaView || defaultAreaView());
   syncMigrationModeToggle(previous?.migrationMode || "off");
   syncPopulationViewToggle(previous?.populationView || "distribution");
+  syncPopulationShareViewToggle(previous?.populationShareView || "trajectory");
   syncHeatmapExpanded(previous?.heatmapExpanded || false);
+  closeExportsModal();
   renderAreaSelector();
 
   if (!preserveSelections) {
@@ -2359,6 +2705,7 @@ async function main() {
     connectHelpButtons();
     connectInputs();
     connectExports();
+    connectViewportResize();
     await rerender();
     if (elements.pageShell) {
       elements.pageShell.dataset.ready = "true";

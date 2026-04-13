@@ -10,11 +10,35 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260412h">
+    <link rel="stylesheet" href="./styles.css?v=20260413a">
     <script src="./vendor/plotly-2.35.2.min.js"></script>
   </head>
   <body>
     <div class="page-shell" data-page-shell>
+      <div class="page-topbar">
+        <div class="stage-view-switch" id="main-view-toggle" role="tablist" aria-label="Dashboard view">
+          <button
+            type="button"
+            class="stage-view-pill is-active"
+            data-main-view="results"
+            role="tab"
+            aria-selected="true"
+            aria-controls="results-stage"
+            tabindex="0"
+          >Results</button>
+          <button
+            type="button"
+            class="stage-view-pill"
+            data-main-view="methods"
+            role="tab"
+            aria-selected="false"
+            aria-controls="methods-stage"
+            tabindex="-1"
+          >Methods</button>
+        </div>
+        <button id="mobile-exports-open" type="button" class="ghost mobile-only">Exports</button>
+      </div>
+
       <aside class="control-rail">
         <div class="rail-intro">
           <h1>Longevity intervention dashboard</h1>
@@ -316,6 +340,7 @@
                 aria-expanded="false"
                 aria-controls="exports-help"
               >i</button>
+              <button id="exports-modal-close" type="button" class="ghost compact-close mobile-only">Close</button>
             </div>
             <p class="rule-note inline-help" id="exports-help" hidden></p>
           </div>
@@ -331,27 +356,6 @@
       </aside>
 
       <main class="main-stage">
-        <div class="stage-view-switch" id="main-view-toggle" role="tablist" aria-label="Dashboard view">
-          <button
-            type="button"
-            class="stage-view-pill is-active"
-            data-main-view="results"
-            role="tab"
-            aria-selected="true"
-            aria-controls="results-stage"
-            tabindex="0"
-          >Results</button>
-          <button
-            type="button"
-            class="stage-view-pill"
-            data-main-view="methods"
-            role="tab"
-            aria-selected="false"
-            aria-controls="methods-stage"
-            tabindex="-1"
-          >Methods</button>
-        </div>
-
         <section id="results-stage">
           <header class="hero">
             <div class="hero-copy">
@@ -401,16 +405,24 @@
           <section class="analysis-grid">
             <article class="plot-frame">
               <div class="plot-header">
-                <p class="eyebrow">Trajectory</p>
-                <h3>Total population</h3>
+                <h3 class="plot-title-accent">Total population</h3>
               </div>
               <div class="plot-surface" id="total-population-chart"></div>
             </article>
 
             <article class="plot-frame">
               <div class="plot-header">
-                <p class="eyebrow">Aging</p>
-                <h3>Share age 65+</h3>
+                <h3 class="plot-title-accent">Population share</h3>
+                <div class="plot-control-row">
+                  <div class="mode-toggle" id="population-share-view-toggle" aria-label="Population share view">
+                    <button type="button" class="mode-pill is-active" data-share-view="trajectory">Trajectory</button>
+                    <button type="button" class="mode-pill" data-share-view="composition">Population share</button>
+                  </div>
+                  <label class="compact-field">
+                    <span>Age cutoff+</span>
+                    <input id="population-share-age" type="number" min="0" max="170" step="1" value="65">
+                  </label>
+                </div>
               </div>
               <div class="plot-surface" id="old-age-share-chart"></div>
             </article>
@@ -451,8 +463,10 @@
 
         <section class="methods-stage" id="methods-stage" hidden></section>
       </main>
+
+      <div class="modal-backdrop" id="exports-modal-backdrop" hidden></div>
     </div>
 
-    <script type="module" src="./app.mjs?v=20260412h"></script>
+    <script type="module" src="./app.mjs?v=20260413a"></script>
   </body>
 </html>
