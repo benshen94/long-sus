@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260413b">
+    <link rel="stylesheet" href="./styles.css?v=20260413i">
     <script src="./vendor/plotly-2.35.2.min.js"></script>
   </head>
   <body>
@@ -360,29 +360,27 @@
           <header class="hero">
             <div class="hero-copy">
               <p class="eyebrow">Interactive validation</p>
-              <h2>Who starts treatment. When they start. Which type of intervention?</h2>
-              <p>
-                Build the intervention directly in the browser. The dashboard recomputes the yearly
-                projection from the selected area's demography and the analytic hazard model.
+              <h2>Treatment starts by age, year, and rule.</h2>
+              <p class="hero-note">
+                Change the rule and the analytic projection updates immediately.
               </p>
             </div>
             <div class="hero-metrics" id="hero-metrics"></div>
-          </header>
-
-          <section class="timeline-bar">
-            <div class="timeline-copy">
-              <p class="eyebrow">Population view year</p>
-              <strong id="year-label">2075</strong>
-            </div>
-            <div class="timeline-view-toggle">
-              <p class="timeline-toggle-label">Population view</p>
-              <div class="mode-toggle" id="population-view-toggle" aria-label="Population view">
-                <button type="button" class="mode-pill is-active" data-population-view="distribution">Age distribution</button>
-                <button type="button" class="mode-pill" data-population-view="pyramid">Pyramid</button>
+            <div class="timeline-bar hero-toolbar">
+              <div class="timeline-copy">
+                <p class="eyebrow">Population view year</p>
+                <strong id="year-label">2075</strong>
               </div>
+              <div class="timeline-view-toggle">
+                <p class="timeline-toggle-label">Population view</p>
+                <div class="mode-toggle" id="population-view-toggle" aria-label="Population view">
+                  <button type="button" class="mode-pill is-active" data-population-view="distribution">Age distribution</button>
+                  <button type="button" class="mode-pill" data-population-view="pyramid">Pyramid</button>
+                </div>
+              </div>
+              <input id="year-slider" type="range" min="2024" max="2100" value="2075">
             </div>
-            <input id="year-slider" type="range" min="2024" max="2100" value="2075">
-          </section>
+          </header>
 
           <section class="pyramid-grid">
             <article class="plot-frame">
@@ -467,6 +465,6 @@
       <div class="modal-backdrop" id="exports-modal-backdrop" hidden></div>
     </div>
 
-    <script type="module" src="./app.mjs?v=20260413b"></script>
+    <script type="module" src="./app.mjs?v=20260413i"></script>
   </body>
 </html>

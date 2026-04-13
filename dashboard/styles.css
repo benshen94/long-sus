@@ -85,7 +85,6 @@ body::before {
 .rail-intro,
 .panel,
 .plot-frame,
-.timeline-bar,
 .hero {
   background: color-mix(in srgb, var(--paper) 92%, white 8%);
   border: 1px solid rgba(107, 96, 81, 0.18);
@@ -140,8 +139,8 @@ h1 {
 }
 
 .hero h2 {
-  font-size: clamp(2.2rem, 4vw, 4rem);
-  max-width: 14ch;
+  font-size: clamp(1.42rem, 2.15vw, 2rem);
+  max-width: 15ch;
 }
 
 .panel {
@@ -380,7 +379,9 @@ h1 {
 
 .timeline-view-toggle {
   display: grid;
-  gap: 0.3rem;
+  grid-template-columns: auto auto;
+  gap: 0.45rem 0.7rem;
+  align-items: center;
 }
 
 .timeline-toggle-label {
@@ -805,65 +806,81 @@ button.ghost {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.85fr);
-  gap: 0.9rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.88fr);
+  grid-template-areas:
+    "copy metrics"
+    "toolbar toolbar";
+  gap: 0.7rem 0.8rem;
   align-items: start;
-  padding: 1rem 1rem 0.95rem;
+  padding: 0.95rem 1rem 0.9rem;
   border-radius: 24px 24px 16px 16px;
 }
 
 .hero-copy {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.45rem;
   align-content: start;
+  min-width: 0;
+  grid-area: copy;
 }
 
-.hero-copy p:last-child {
+.hero-note {
   margin: 0;
-  max-width: 62ch;
+  max-width: 48ch;
+}
+
+.hero-toolbar {
+  display: grid;
+  grid-template-columns: auto auto minmax(220px, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(121, 111, 95, 0.16);
+  grid-area: toolbar;
 }
 
 .hero-metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
   align-content: start;
   align-self: start;
+  grid-area: metrics;
 }
 
 .metric-tile {
   display: grid;
-  gap: 0.25rem;
-  min-height: 118px;
-  padding: 0.75rem 0.8rem;
+  gap: 0.22rem;
+  min-height: 0;
+  padding: 0.58rem 0.68rem;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(248, 241, 228, 0.92));
   border: 1px solid rgba(121, 111, 95, 0.18);
+  align-content: start;
 }
 
 .metric-label {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--ink-soft);
 }
 
 .metric-value {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   line-height: 1;
 }
 
 .timeline-bar {
   display: grid;
   grid-template-columns: auto auto minmax(260px, 1fr);
-  gap: 0.85rem;
+  gap: 0.75rem;
   align-items: center;
-  padding: 0.8rem 0.95rem;
-  border-radius: 16px;
+  padding: 0;
 }
 
 .timeline-copy strong {
-  font-size: 1.55rem;
+  font-size: 1.4rem;
 }
 
 input[type="range"] {
@@ -998,6 +1015,17 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .hero {
+    grid-template-areas:
+      "copy"
+      "metrics"
+      "toolbar";
+  }
+
+  .hero-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .methods-grid,
   .methods-grid.methods-grid-wide,
   .methods-flow {
@@ -1037,7 +1065,6 @@ code {
   .rail-intro,
   .panel,
   .plot-frame,
-  .timeline-bar,
   .hero {
     border-radius: 16px;
   }
@@ -1152,11 +1179,6 @@ code {
     padding: 0.35rem;
   }
 
-  .hero-metrics {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
   .methods-stage {
     padding: 0.9rem;
   }
@@ -1176,7 +1198,17 @@ code {
 
   .timeline-bar {
     gap: 0.65rem;
-    padding: 0.75rem 0.8rem;
+  }
+
+  .hero-toolbar {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    padding-top: 0.65rem;
+  }
+
+  .timeline-view-toggle {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .plot-control-row {
@@ -1191,6 +1223,11 @@ code {
 
   .timeline-copy strong {
     font-size: 1.25rem;
+  }
+
+  .hero-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
   .plot-frame {
@@ -1223,7 +1260,6 @@ code {
   .rail-intro,
   .panel,
   .plot-frame,
-  .timeline-bar,
   .hero,
   .methods-stage {
     border-radius: 14px;

@@ -36,6 +36,20 @@ What we changed:
 
 ## 2026-04-13
 
+### Brazil, China, and Nigeria fits underweighted the ages we care about most
+
+What the bug was:
+- The fitter used the default age weighting for Brazil, China, and Nigeria even though the main calibration priority for those countries is the hazard shape between ages 70 and 90.
+
+What it caused:
+- Their saved baseline SR fits could spend too much effort matching younger ages and not enough effort matching the late-life window that matters most for the intervention analysis.
+- The dashboard analytics tabs then inherited those less targeted fits because they read the saved country presets.
+
+What we changed:
+- Added explicit high-age weighting rules for Brazil, China, and Nigeria.
+- Concentrated the extra weight on ages 70 to 90 and increased the peak multiplier there.
+- Rebuilt the saved baseline-fit params and dashboard analytic preset assets so the analytics tabs use the updated fits.
+
 ### Country-specific analytic fits existed but were not enforced as a hard rule
 
 What the bug was:

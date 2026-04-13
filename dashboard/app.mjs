@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260413b";
-import { createInterventionStore } from "./interventions.mjs?v=20260413b";
+} from "./runtime.mjs?v=20260413i";
+import { createInterventionStore } from "./interventions.mjs?v=20260413i";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260413b";
+} from "./content.mjs?v=20260413i";
 
 
 const state = {
