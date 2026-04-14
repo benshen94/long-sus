@@ -152,3 +152,17 @@ What we changed:
 - Switched the analysis cards to a fill layout so each panel uses the same header-plus-chart structure and aligns cleanly across the row.
 - Increased the summary strip typography, metric values, year label, numeric input sizing, and slider thickness.
 - Bumped the dashboard asset versions again so the browser loads the matching HTML, CSS, and modules together.
+
+### The dashboard did not show the fertility path driving births over time
+
+What the bug was:
+- The dashboard already used yearly fertility inputs in the demographic backbone, but there was no panel showing the total fertility rate trend itself.
+
+What it caused:
+- Users could inspect mortality-side context and survival context without seeing a key birth-side driver of the projection.
+- The lower analysis section missed an important demographic context view.
+
+What we changed:
+- Added a full-width total fertility rate panel directly beneath the SR cohort view.
+- Computed yearly TFR in the browser from the existing age-specific fertility arrays already present in the demography asset.
+- Added a replacement-level reference line so the fertility chart is readable at a glance on desktop and mobile.

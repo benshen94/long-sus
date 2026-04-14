@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260413o";
-import { createInterventionStore } from "./interventions.mjs?v=20260413o";
+} from "./runtime.mjs?v=20260414a";
+import { createInterventionStore } from "./interventions.mjs?v=20260414a";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260413o";
+} from "./content.mjs?v=20260414a";
 
 
 const state = {
@@ -122,6 +122,7 @@ const elements = {
   heatmapFrame: document.querySelector(".heatmap-frame"),
   treatedHeatmapChart: document.getElementById("treated-heatmap-chart"),
   survivalChart: document.getElementById("survival-chart"),
+  fertilityChart: document.getElementById("fertility-chart"),
   exportScenarioCsv: document.getElementById("export-scenario-csv"),
   exportPyramidsCsv: document.getElementById("export-pyramids-csv"),
   exportSummaryCsv: document.getElementById("export-summary-csv"),
@@ -1818,6 +1819,59 @@ function renderSurvivalChart() {
 }
 
 
+function fertilitySeries() {
+  if (!state.demography?.fertility) {
+    return [];
+  }
+
+  return state.demography.years.map((year) => {
+    const fertilityByAge = state.demography.fertility[String(year)] || [];
+    const totalFertilityRate = fertilityByAge.reduce((sum, value) => sum + Number(value || 0), 0);
+    return { year, totalFertilityRate };
+  });
+}
+
+
+function renderFertilityChart() {
+  if (!elements.fertilityChart) {
+    return;
+  }
+
+  const rows = fertilitySeries();
+  const replacementLevel = 2.1;
+
+  Plotly.react(elements.fertilityChart, [
+    {
+      x: rows.map((row) => row.year),
+      y: rows.map((row) => row.totalFertilityRate),
+      type: "scatter",
+      mode: "lines",
+      line: { color: "#b5542f", width: 3.5 },
+      fill: "tozeroy",
+      fillcolor: "rgba(181, 84, 47, 0.10)",
+      name: "Total fertility rate",
+      hovertemplate: "Year %{x}<br>TFR %{y:.2f}<extra></extra>",
+    },
+    {
+      x: rows.map((row) => row.year),
+      y: rows.map(() => replacementLevel),
+      type: "scatter",
+      mode: "lines",
+      line: { color: "#7c7366", width: 2, dash: "dot" },
+      name: "Replacement level",
+      hovertemplate: "Year %{x}<br>Replacement %{y:.2f}<extra></extra>",
+    },
+  ], {
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    margin: plotMargins({ left: 56, right: 20, top: 40, bottom: 92 }),
+    xaxis: { title: axisTitle("Year"), automargin: true, gridcolor: "#ece4d7" },
+    yaxis: { title: axisTitle("Births per woman"), automargin: true, gridcolor: "#d7d0c2" },
+    legend: plotLegendLayout(),
+  }, { responsive: true, displayModeBar: false });
+}
+
+
 function scenarioHeadline(scenario) {
   const branchText = branchLabel(scenario.branch);
   if (scenario.target === null) {
@@ -2060,6 +2114,7 @@ async function projectAndRender() {
   renderLineCharts();
   renderHeatmap(activeScenario);
   renderSurvivalChart();
+  renderFertilityChart();
   renderMethodsStage(activeScenario);
   updateUrl(activeScenario, compareScenario, selectedYear);
   setStatus("Ready");
@@ -2567,6 +2622,7 @@ function connectViewportResize() {
       renderLineCharts();
       renderHeatmap(buildActiveScenario());
       renderSurvivalChart();
+      renderFertilityChart();
     });
   });
 }
