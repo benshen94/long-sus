@@ -34,6 +34,21 @@ What we changed:
 - We stopped the cohort hazard builder from dropping to zero at extreme ages just because the weighting population had numerically vanished there.
 - We added regression tests for post-100 mortality extrapolation.
 
+### `eta_shift` factor direction was reversed
+
+What the bug was:
+- The `eta_shift` intervention treated factors above `1.0` as beneficial and factors below `1.0` as harmful.
+- That was the opposite of the intended convention, where lowering `eta` should improve survival.
+
+What it caused:
+- A rejuvenation factor like `0.8` made survival worse instead of better.
+- The dashboard text, defaults, and factor grid reinforced the wrong direction.
+
+What we changed:
+- We flipped the `eta_shift` sign convention so `eta_new = eta_old * factor` with smaller factors giving better survival.
+- We changed the default and grid so `eta_shift` now moves in the same direction as `eta`.
+- We updated the dashboard copy and added a regression test for the direction of effect.
+
 ## 2026-04-13
 
 ### Brazil, China, and Nigeria fits underweighted the ages we care about most

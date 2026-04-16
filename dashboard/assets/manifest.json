@@ -1,270 +1,270 @@
 {
-  "title": "Analytic Longevity Dashboard",
-  "country": "World",
-  "country_label": "World",
-  "default_area": "world",
-  "areas": [
-    {
-      "slug": "usa",
-      "country": "USA",
-      "country_label": "USA",
-      "iso3": "USA",
-      "continent": "North America",
-      "default_analytic_preset_id": "usa_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/usa/demography.json",
-        "analytic_presets": "./areas/usa/analytic_presets.json",
-        "calibration": "./areas/usa/calibration.json"
-      }
+    "title": "Analytic Longevity Dashboard",
+    "country": "World",
+    "country_label": "World",
+    "default_area": "world",
+    "areas": [
+        {
+            "slug": "usa",
+            "country": "USA",
+            "country_label": "USA",
+            "iso3": "USA",
+            "continent": "North America",
+            "default_analytic_preset_id": "usa_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/usa/demography.json",
+                "analytic_presets": "./areas/usa/analytic_presets.json",
+                "calibration": "./areas/usa/calibration.json"
+            }
+        },
+        {
+            "slug": "world",
+            "country": "World",
+            "country_label": "World",
+            "iso3": "OWID_WRL",
+            "continent": "Global",
+            "default_analytic_preset_id": "world_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/world/demography.json",
+                "analytic_presets": "./areas/world/analytic_presets.json",
+                "calibration": "./areas/world/calibration.json"
+            }
+        },
+        {
+            "slug": "china",
+            "country": "China",
+            "country_label": "China",
+            "iso3": "CHN",
+            "continent": "Asia",
+            "default_analytic_preset_id": "china_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/china/demography.json",
+                "analytic_presets": "./areas/china/analytic_presets.json",
+                "calibration": "./areas/china/calibration.json"
+            }
+        },
+        {
+            "slug": "india",
+            "country": "India",
+            "country_label": "India",
+            "iso3": "IND",
+            "continent": "Asia",
+            "default_analytic_preset_id": "india_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/india/demography.json",
+                "analytic_presets": "./areas/india/analytic_presets.json",
+                "calibration": "./areas/india/calibration.json"
+            }
+        },
+        {
+            "slug": "israel",
+            "country": "Israel",
+            "country_label": "Israel",
+            "iso3": "ISR",
+            "continent": "Asia",
+            "default_analytic_preset_id": "israel_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/israel/demography.json",
+                "analytic_presets": "./areas/israel/analytic_presets.json",
+                "calibration": "./areas/israel/calibration.json"
+            }
+        },
+        {
+            "slug": "italy",
+            "country": "Italy",
+            "country_label": "Italy",
+            "iso3": "ITA",
+            "continent": "Europe",
+            "default_analytic_preset_id": "italy_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/italy/demography.json",
+                "analytic_presets": "./areas/italy/analytic_presets.json",
+                "calibration": "./areas/italy/calibration.json"
+            }
+        },
+        {
+            "slug": "brazil",
+            "country": "Brazil",
+            "country_label": "Brazil",
+            "iso3": "BRA",
+            "continent": "South America",
+            "default_analytic_preset_id": "brazil_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/brazil/demography.json",
+                "analytic_presets": "./areas/brazil/analytic_presets.json",
+                "calibration": "./areas/brazil/calibration.json"
+            }
+        },
+        {
+            "slug": "nigeria",
+            "country": "Nigeria",
+            "country_label": "Nigeria",
+            "iso3": "NGA",
+            "continent": "Africa",
+            "default_analytic_preset_id": "nigeria_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/nigeria/demography.json",
+                "analytic_presets": "./areas/nigeria/analytic_presets.json",
+                "calibration": "./areas/nigeria/calibration.json"
+            }
+        },
+        {
+            "slug": "south_africa",
+            "country": "South Africa",
+            "country_label": "South Africa",
+            "iso3": "ZAF",
+            "continent": "Africa",
+            "default_analytic_preset_id": "south_africa_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/south_africa/demography.json",
+                "analytic_presets": "./areas/south_africa/analytic_presets.json",
+                "calibration": "./areas/south_africa/calibration.json"
+            }
+        },
+        {
+            "slug": "uganda",
+            "country": "Uganda",
+            "country_label": "Uganda",
+            "iso3": "UGA",
+            "continent": "Africa",
+            "default_analytic_preset_id": "uganda_period_2024_both_hazard",
+            "paths": {
+                "demography": "./areas/uganda/demography.json",
+                "analytic_presets": "./areas/uganda/analytic_presets.json",
+                "calibration": "./areas/uganda/calibration.json"
+            }
+        }
+    ],
+    "branch_options": [
+        "analytic_arm"
+    ],
+    "default_branch": "analytic_arm",
+    "default_target": "eta",
+    "default_eta_factor": 0.8,
+    "default_eta_shift_factor": 0.8,
+    "default_xc_factor": 1.1,
+    "default_analytic_preset_id": "world_period_2024_both_hazard",
+    "analytic_factor_min": 0.5,
+    "analytic_factor_max": 1.6,
+    "analytic_factor_step": 0.01,
+    "default_launch_year": 2025,
+    "default_projection_end_year": 2100,
+    "default_preset_id": "threshold_age_60_all_eligible",
+    "default_compare_preset_id": "no_one",
+    "default_threshold_age": 60,
+    "default_threshold_probability": 100,
+    "default_start_rule": "absolute",
+    "default_rollout_curve": "linear",
+    "default_rollout_launch_probability": 10,
+    "default_rollout_max_probability": 50,
+    "default_rollout_ramp_years": 12,
+    "default_rollout_takeoff_years": 8,
+    "default_bands": [
+        {
+            "start_age": 20,
+            "end_age": 39,
+            "target_share": 0.35
+        },
+        {
+            "start_age": 40,
+            "end_age": 64,
+            "target_share": 0.65
+        },
+        {
+            "start_age": 65,
+            "end_age": null,
+            "target_share": 0.95
+        }
+    ],
+    "target_options": [
+        "eta",
+        "eta_shift",
+        "Xc"
+    ],
+    "factor_grids": {
+        "eta": [
+            1.0,
+            0.95,
+            0.9,
+            0.85,
+            0.8,
+            0.75,
+            0.7
+        ],
+        "eta_shift": [
+            1.0,
+            0.95,
+            0.9,
+            0.85,
+            0.8,
+            0.75,
+            0.7
+        ],
+        "Xc": [
+            1.0,
+            1.1,
+            1.2,
+            1.3,
+            1.4,
+            1.5,
+            1.6
+        ]
     },
-    {
-      "slug": "world",
-      "country": "World",
-      "country_label": "World",
-      "iso3": "OWID_WRL",
-      "continent": "Global",
-      "default_analytic_preset_id": "world_period_2024_both_hazard",
-      "paths": {
+    "branch_factor_grids": {
+        "sr": {
+            "eta": [
+                1.0,
+                0.95,
+                0.9,
+                0.85,
+                0.8,
+                0.75,
+                0.7
+            ],
+            "eta_shift": [
+                1.0
+            ],
+            "Xc": [
+                1.0,
+                1.1,
+                1.2
+            ]
+        },
+        "analytic_arm": {
+            "eta": [
+                1.0,
+                0.95,
+                0.9,
+                0.85,
+                0.8,
+                0.75,
+                0.7
+            ],
+            "eta_shift": [
+                1.0,
+                0.95,
+                0.9,
+                0.85,
+                0.8,
+                0.75,
+                0.7
+            ],
+            "Xc": [
+                1.0,
+                1.1,
+                1.2,
+                1.3,
+                1.4,
+                1.5,
+                1.6
+            ]
+        }
+    },
+    "paths": {
         "demography": "./areas/world/demography.json",
+        "sr_interventions_root": "./interventions/sr",
         "analytic_presets": "./areas/world/analytic_presets.json",
-        "calibration": "./areas/world/calibration.json"
-      }
-    },
-    {
-      "slug": "china",
-      "country": "China",
-      "country_label": "China",
-      "iso3": "CHN",
-      "continent": "Asia",
-      "default_analytic_preset_id": "china_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/china/demography.json",
-        "analytic_presets": "./areas/china/analytic_presets.json",
-        "calibration": "./areas/china/calibration.json"
-      }
-    },
-    {
-      "slug": "india",
-      "country": "India",
-      "country_label": "India",
-      "iso3": "IND",
-      "continent": "Asia",
-      "default_analytic_preset_id": "india_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/india/demography.json",
-        "analytic_presets": "./areas/india/analytic_presets.json",
-        "calibration": "./areas/india/calibration.json"
-      }
-    },
-    {
-      "slug": "israel",
-      "country": "Israel",
-      "country_label": "Israel",
-      "iso3": "ISR",
-      "continent": "Asia",
-      "default_analytic_preset_id": "israel_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/israel/demography.json",
-        "analytic_presets": "./areas/israel/analytic_presets.json",
-        "calibration": "./areas/israel/calibration.json"
-      }
-    },
-    {
-      "slug": "italy",
-      "country": "Italy",
-      "country_label": "Italy",
-      "iso3": "ITA",
-      "continent": "Europe",
-      "default_analytic_preset_id": "italy_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/italy/demography.json",
-        "analytic_presets": "./areas/italy/analytic_presets.json",
-        "calibration": "./areas/italy/calibration.json"
-      }
-    },
-    {
-      "slug": "brazil",
-      "country": "Brazil",
-      "country_label": "Brazil",
-      "iso3": "BRA",
-      "continent": "South America",
-      "default_analytic_preset_id": "brazil_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/brazil/demography.json",
-        "analytic_presets": "./areas/brazil/analytic_presets.json",
-        "calibration": "./areas/brazil/calibration.json"
-      }
-    },
-    {
-      "slug": "nigeria",
-      "country": "Nigeria",
-      "country_label": "Nigeria",
-      "iso3": "NGA",
-      "continent": "Africa",
-      "default_analytic_preset_id": "nigeria_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/nigeria/demography.json",
-        "analytic_presets": "./areas/nigeria/analytic_presets.json",
-        "calibration": "./areas/nigeria/calibration.json"
-      }
-    },
-    {
-      "slug": "south_africa",
-      "country": "South Africa",
-      "country_label": "South Africa",
-      "iso3": "ZAF",
-      "continent": "Africa",
-      "default_analytic_preset_id": "south_africa_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/south_africa/demography.json",
-        "analytic_presets": "./areas/south_africa/analytic_presets.json",
-        "calibration": "./areas/south_africa/calibration.json"
-      }
-    },
-    {
-      "slug": "uganda",
-      "country": "Uganda",
-      "country_label": "Uganda",
-      "iso3": "UGA",
-      "continent": "Africa",
-      "default_analytic_preset_id": "uganda_period_2024_both_hazard",
-      "paths": {
-        "demography": "./areas/uganda/demography.json",
-        "analytic_presets": "./areas/uganda/analytic_presets.json",
-        "calibration": "./areas/uganda/calibration.json"
-      }
+        "calibration": "./areas/world/calibration.json",
+        "scenario_catalog": "./usa_validation_scenarios.json"
     }
-  ],
-  "branch_options": [
-    "analytic_arm"
-  ],
-  "default_branch": "analytic_arm",
-  "default_target": "eta",
-  "default_eta_factor": 0.8,
-  "default_eta_shift_factor": 1.2,
-  "default_xc_factor": 1.1,
-  "default_analytic_preset_id": "world_period_2024_both_hazard",
-  "analytic_factor_min": 0.5,
-  "analytic_factor_max": 1.6,
-  "analytic_factor_step": 0.01,
-  "default_launch_year": 2025,
-  "default_projection_end_year": 2100,
-  "default_preset_id": "threshold_age_60_all_eligible",
-  "default_compare_preset_id": "no_one",
-  "default_threshold_age": 60,
-  "default_threshold_probability": 100,
-  "default_start_rule": "absolute",
-  "default_rollout_curve": "linear",
-  "default_rollout_launch_probability": 10,
-  "default_rollout_max_probability": 50,
-  "default_rollout_ramp_years": 12,
-  "default_rollout_takeoff_years": 8,
-  "default_bands": [
-    {
-      "start_age": 20,
-      "end_age": 39,
-      "target_share": 0.35
-    },
-    {
-      "start_age": 40,
-      "end_age": 64,
-      "target_share": 0.65
-    },
-    {
-      "start_age": 65,
-      "end_age": null,
-      "target_share": 0.95
-    }
-  ],
-  "target_options": [
-    "eta",
-    "eta_shift",
-    "Xc"
-  ],
-  "factor_grids": {
-    "eta": [
-      1.0,
-      0.95,
-      0.9,
-      0.85,
-      0.8,
-      0.75,
-      0.7
-    ],
-    "eta_shift": [
-      1.0,
-      1.1,
-      1.2,
-      1.3,
-      1.4,
-      1.5,
-      1.6
-    ],
-    "Xc": [
-      1.0,
-      1.1,
-      1.2,
-      1.3,
-      1.4,
-      1.5,
-      1.6
-    ]
-  },
-  "branch_factor_grids": {
-    "sr": {
-      "eta": [
-        1.0,
-        0.95,
-        0.9,
-        0.85,
-        0.8,
-        0.75,
-        0.7
-      ],
-      "eta_shift": [
-        1.0
-      ],
-      "Xc": [
-        1.0,
-        1.1,
-        1.2
-      ]
-    },
-    "analytic_arm": {
-      "eta": [
-        1.0,
-        0.95,
-        0.9,
-        0.85,
-        0.8,
-        0.75,
-        0.7
-      ],
-      "eta_shift": [
-        1.0,
-        1.1,
-        1.2,
-        1.3,
-        1.4,
-        1.5,
-        1.6
-      ],
-      "Xc": [
-        1.0,
-        1.1,
-        1.2,
-        1.3,
-        1.4,
-        1.5,
-        1.6
-      ]
-    }
-  },
-  "paths": {
-    "demography": "./areas/world/demography.json",
-    "sr_interventions_root": "./interventions/sr",
-    "analytic_presets": "./areas/world/analytic_presets.json",
-    "calibration": "./areas/world/calibration.json",
-    "scenario_catalog": "./usa_validation_scenarios.json"
-  }
 }

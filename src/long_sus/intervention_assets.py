@@ -372,7 +372,7 @@ def _analytic_multiplier_exponent(
         return -((xc / epsilon) * (eta - (factor * eta)) * delta_age)
 
     if target == "eta_shift":
-        eta_shift = (factor * eta) - eta
+        eta_shift = eta - (factor * eta)
         return -((xc / epsilon) * eta_shift * attained_ages)
 
     raise ValueError(f"Unsupported target: {target}")

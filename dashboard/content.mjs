@@ -48,7 +48,7 @@ const TARGET_COPY = {
     title: "Rejuvenation (eta shift)",
     short: "Eta moves immediately at treatment start.",
     description: "Rolling back the clock - eta-shift interventions apply an immediate multiplicative change to eta at treatment start.",
-    note: "In this dashboard, eta_new = eta_old * factor, so larger factors mean a larger immediate shift.",
+    note: "In this dashboard, eta_new = eta_old * factor, so smaller factors mean a larger immediate shift.",
   },
   Xc: {
     title: "Increasing robustness (Xc)",

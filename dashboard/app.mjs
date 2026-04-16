@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260414a";
-import { createInterventionStore } from "./interventions.mjs?v=20260414a";
+} from "./runtime.mjs?v=20260416a";
+import { createInterventionStore } from "./interventions.mjs?v=20260416a";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260414a";
+} from "./content.mjs?v=20260416a";
 
 
 const state = {
@@ -170,7 +170,7 @@ const TARGET_LABELS = {
 
 const TARGET_HELP = {
   eta: "Slowing age means the rate of aging, or damage production, is reduced after treatment starts.",
-  eta_shift: "Rejuvenation means eta is shifted immediately after treatment starts. In this dashboard, eta_new = eta_old × factor.",
+  eta_shift: "Rejuvenation means eta is shifted immediately after treatment starts. In this dashboard, eta_new = eta_old × factor, so smaller values lower eta immediately.",
   Xc: "Increasing robustness means rectangularization of the survival curve: mortality stays lower until later ages, then rises more sharply.",
 };
 
@@ -489,7 +489,7 @@ function currentCountryName() {
 
 function defaultFactorForTarget(target) {
   if (target === "eta_shift") {
-    return Number(state.manifest.default_eta_shift_factor || 1.2);
+    return Number(state.manifest.default_eta_shift_factor || 0.8);
   }
   if (target === "Xc") {
     return Number(state.manifest.default_xc_factor);
@@ -611,7 +611,7 @@ function refreshHelpText() {
       );
     } else if (target === "eta_shift") {
       elements.factorHelp.innerHTML = renderHelpContent(
-        "Factor multiplies eta directly: eta_new = eta_old × factor. Larger values mean a larger immediate rejuvenation-style shift.",
+        "Factor multiplies eta directly: eta_new = eta_old × factor. Smaller values mean a larger immediate rejuvenation-style shift.",
       );
     } else if (target === "Xc") {
       elements.factorHelp.innerHTML = renderHelpContent(

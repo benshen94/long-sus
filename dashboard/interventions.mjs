@@ -144,7 +144,7 @@ function analyticExponent(target, factor, attainedAge, startAge, params) {
   }
 
   if (target === "eta_shift") {
-    const etaShift = (factor * eta) - eta;
+    const etaShift = eta - (factor * eta);
     return -((xc / epsilon) * etaShift * attainedAge);
   }
 
