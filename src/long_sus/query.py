@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 import sqlite3
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from .catalog import build_analytic_catalog
 from .config import (
     ANALYTIC_CATALOG_DB_PATH,
+    DASHBOARD_ASSETS_DIR,
     ETA_FACTOR_GRID,
     ETA_SHIFT_FACTOR_GRID,
     ROLLOUT_CURVES,
@@ -203,8 +206,52 @@ def _require_catalog_support(query: ScenarioQuery) -> None:
 
 @lru_cache(maxsize=16)
 def _load_variant_inputs(country: str, variant_name: str) -> VariantInputs:
+    dashboard_inputs = _load_dashboard_variant_inputs(country, variant_name)
+    if dashboard_inputs is not None:
+        return dashboard_inputs
+
     bundle = download_country_wpp_bundle(country)
     return build_variant_inputs(bundle, variant_name)
+
+
+def _load_dashboard_variant_inputs(country: str, variant_name: str) -> VariantInputs | None:
+    country_spec = get_country_spec(country)
+    path = DASHBOARD_ASSETS_DIR / "areas" / country_spec.slug / "demography.json"
+    if not path.exists():
+        return None
+
+    payload = json.loads(path.read_text())
+    if payload.get("variant_name") != variant_name:
+        return None
+
+    return VariantInputs(
+        variant_name=variant_name,
+        years=[int(year) for year in payload["years"]],
+        ages=np.asarray(payload["ages"], dtype=int),
+        population=_year_sex_array_map(payload["population"]),
+        mortality=_year_sex_array_map(payload["mortality"]),
+        fertility=_year_array_map(payload["fertility"]),
+        sex_ratio_at_birth={int(year): float(value) for year, value in payload["sex_ratio_at_birth"].items()},
+        net_migration_total={int(year): float(value) for year, value in payload["net_migration_total"].items()},
+        migration_residual=_year_sex_array_map(payload["migration_residual"]),
+    )
+
+
+def _year_array_map(values: dict[str, list[float]]) -> dict[int, np.ndarray]:
+    return {
+        int(year): np.asarray(row, dtype=float)
+        for year, row in values.items()
+    }
+
+
+def _year_sex_array_map(values: dict[str, dict[str, list[float]]]) -> dict[int, dict[str, np.ndarray]]:
+    return {
+        int(year): {
+            sex: np.asarray(row, dtype=float)
+            for sex, row in year_values.items()
+        }
+        for year, year_values in values.items()
+    }
 
 
 @lru_cache(maxsize=1)

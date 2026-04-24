@@ -10,6 +10,7 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 COPY baseline_fits ./baseline_fits
 COPY data ./data
+COPY dashboard/assets/areas ./dashboard/assets/areas
 
 RUN pip install --no-cache-dir -e .
 
