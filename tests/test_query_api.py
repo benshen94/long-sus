@@ -75,6 +75,7 @@ class QueryApiTest(unittest.TestCase):
         self.assertTrue(any(country["country"] == "India" for country in countries))
         self.assertTrue(any(country["country"] == "Brazil" for country in countries))
         self.assertTrue(any(scheme["id"] == "threshold_age_60_all_eligible" for scheme in schemes))
+        self.assertTrue(any(scheme["id"] == "rollout_threshold_linear" for scheme in schemes))
 
     def test_country_registry_accepts_slug_and_display_name(self) -> None:
         self.assertEqual(get_country_spec("world").name, "World")
@@ -206,3 +207,61 @@ class QueryApiTest(unittest.TestCase):
         self.assertFalse(frame.empty)
         self.assertEqual(float(frame.loc[0, "threshold_age"]), 55.0)
         self.assertEqual(float(frame.loc[0, "threshold_probability"]), 0.5)
+
+    def test_rollout_query_overrides_are_applied(self) -> None:
+        frame = get_population_size(
+            ScenarioQuery(
+                country="World",
+                scheme_id="rollout_threshold_linear",
+                target="eta",
+                factor=0.8,
+                branch="analytic_arm",
+                year=2050,
+                source="project",
+                threshold_age=58,
+                rollout_curve="logistic",
+                rollout_launch_probability=0.15,
+                rollout_max_probability=0.55,
+                rollout_takeoff_years=9,
+            ),
+            catalog_path=self.catalog_path,
+        )
+
+        self.assertFalse(frame.empty)
+        self.assertEqual(float(frame.loc[0, "threshold_age"]), 58.0)
+        self.assertEqual(frame.loc[0, "rollout_curve"], "logistic")
+        self.assertEqual(float(frame.loc[0, "rollout_launch_probability"]), 0.15)
+        self.assertEqual(float(frame.loc[0, "rollout_max_probability"]), 0.55)
+        self.assertEqual(float(frame.loc[0, "rollout_takeoff_years"]), 9.0)
+
+    def test_rollout_catalog_query_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            get_population_size(
+                ScenarioQuery(
+                    country="World",
+                    scheme_id="rollout_threshold_linear",
+                    target="eta",
+                    factor=0.8,
+                    branch="analytic_arm",
+                    year=2050,
+                    source="catalog",
+                ),
+                catalog_path=self.catalog_path,
+            )
+
+    def test_invalid_rollout_probability_order_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            get_population_size(
+                ScenarioQuery(
+                    country="World",
+                    scheme_id="rollout_threshold_linear",
+                    target="eta",
+                    factor=0.8,
+                    branch="analytic_arm",
+                    year=2050,
+                    source="project",
+                    rollout_launch_probability=0.60,
+                    rollout_max_probability=0.40,
+                ),
+                catalog_path=self.catalog_path,
+            )

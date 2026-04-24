@@ -18,6 +18,8 @@ This stage is designed to validate the corrected intervention mechanics before t
 - `prescription_bands_equal_probabilities`
 - `prescription_bands_uniform_start_age`
 - `threshold_age_60_all_eligible`
+- `rollout_threshold_linear`
+- `rollout_threshold_logistic`
 
 ## Fixed PDF-style age bands
 
@@ -33,3 +35,7 @@ This stage is designed to validate the corrected intervention mechanics before t
 - `half_population_adult_band` is defined here as `50%` uptake in a single `20+` band.
 - `elderly` means `65+`.
 - `middle age` means `40-64`.
+- `threshold` means one first-eligibility event with no later catch-up.
+- `rollout` means eligible untreated people keep getting a yearly chance to start, and that yearly chance rises after launch.
+- `rollout_threshold_linear` uses a straight-line ramp from a `10%` launch-year annual chance to a `50%` annual cap over `12` years.
+- `rollout_threshold_logistic` uses the same `10%` to `50%` annual range, but with an S-curve whose takeoff is centered around `8` years after launch.

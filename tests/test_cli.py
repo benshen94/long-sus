@@ -117,3 +117,33 @@ class CliTest(unittest.TestCase):
         )
         self.assertIn("total_population", output)
         self.assertIn("USA", output)
+
+    def test_project_command_accepts_rollout_arguments(self) -> None:
+        output = self._run(
+            "project",
+            "--country",
+            "World",
+            "--scheme-id",
+            "rollout_threshold_linear",
+            "--target",
+            "eta",
+            "--factor",
+            "0.8",
+            "--branch",
+            "analytic_arm",
+            "--source",
+            "project",
+            "--rollout-curve",
+            "logistic",
+            "--rollout-launch-probability",
+            "0.15",
+            "--rollout-max-probability",
+            "0.55",
+            "--rollout-takeoff-years",
+            "9",
+            "--format",
+            "csv",
+        )
+
+        self.assertIn("rollout_curve", output)
+        self.assertIn("logistic", output)

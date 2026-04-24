@@ -18,6 +18,8 @@ The public query layer is designed to answer two common requests:
 1. Population sizes over time.
 2. Population pyramids for a specific year.
 
+The same query layer is also exposed as a small URL API for external dashboards. See [docs/api.md](docs/api.md) for endpoints, query parameters, and hosting notes.
+
 Under the hood, the current repo combines:
 
 - `UN WPP 2024` population, fertility, mortality, sex ratio at birth, and migration inputs
@@ -38,6 +40,12 @@ The public API uses the current internal vocabulary directly.
 - `year`: projection year
 - `sex`: optional, `male` or `female`
 - `threshold_probability`: optional override for threshold schemes, from `0.0` to `1.0`
+- `threshold_age`: optional override for threshold and rollout schemes
+- `rollout_curve`: optional override for rollout schemes, `linear` or `logistic`
+- `rollout_launch_probability`: optional rollout launch-year annual start chance, from `0.0` to `1.0`
+- `rollout_max_probability`: optional rollout long-run annual start cap, from `0.0` to `1.0`
+- `rollout_ramp_years`: optional rollout timing control for the linear curve
+- `rollout_takeoff_years`: optional rollout timing control for the logistic curve
 
 ### Treatment scheme
 
@@ -49,6 +57,8 @@ The public API uses the current internal vocabulary directly.
 - `prescription_bands_absolute`
 - `prescription_bands_equal_probabilities`
 - `prescription_bands_uniform_start_age`
+- `rollout_threshold_linear`
+- `rollout_threshold_logistic`
 
 Run `long-sus schemes` or `long_sus.list_supported_schemes()` to inspect the full catalog.
 
@@ -117,6 +127,22 @@ from long_sus import build_public_analytic_catalog
 
 build_public_analytic_catalog()
 ```
+
+## URL API Quickstart
+
+Run the local API server:
+
+```bash
+long-sus-api
+```
+
+Then query population rows by URL:
+
+```text
+http://localhost:8000/population-pyramid?country=World&scheme_id=threshold_age_60_all_eligible&target=Xc&factor=1.2&branch=analytic_arm&year=2050
+```
+
+The response includes `population_count`, `treated_population_count`, and `untreated_population_count` for each `year`, `sex`, and `age`. Add `format=csv` to get CSV instead of JSON.
 
 ## Python Quickstart
 
@@ -187,6 +213,29 @@ half_take_up = get_population_size(
         branch="analytic_arm",
         threshold_age=60,
         threshold_probability=0.5,
+    )
+)
+```
+
+### Rollout query with calendar-time popularity growth
+
+This keeps age-based eligibility, but the annual start chance rises after launch as the intervention becomes more common. Eligible untreated people keep getting another yearly chance to start.
+
+```python
+from long_sus import ScenarioQuery, get_population_size
+
+rollout = get_population_size(
+    ScenarioQuery(
+        country="World",
+        scheme_id="rollout_threshold_linear",
+        target="eta",
+        factor=0.8,
+        branch="analytic_arm",
+        threshold_age=60,
+        rollout_curve="logistic",
+        rollout_launch_probability=0.10,
+        rollout_max_probability=0.50,
+        rollout_takeoff_years=8,
     )
 )
 ```
@@ -297,6 +346,7 @@ This is the fast path. It is what `get_population_pyramid()` and `get_population
 - `branch="analytic_arm"`
 - the country is supported
 - the factor is in the shipped grid for that target
+- the scheme is a shipped non-rollout preset
 
 To keep the repository GitHub-sized, the shipped catalog is summary-focused. Population-size queries can be served directly from the tracked catalog. Population-pyramid queries fall back to on-demand projection when a local population catalog has not been built.
 
@@ -307,6 +357,7 @@ Use this when:
 - you want a custom factor such as `1.15`
 - the shipped catalog is unavailable locally
 - you explicitly want to recompute the scenario
+- you are using a rollout scheme, which is always projected on demand
 
 For on-demand analytic work, use `project_analytic_scenario()` directly, or keep using `get_population_pyramid()` / `get_population_size()` and let them fall back automatically.
 
@@ -331,6 +382,12 @@ Returns the treatment scheme catalog, including:
 - `uptake_mode`
 - `threshold_age`
 - `start_rule_within_band`
+- `threshold_probability`
+- `rollout_curve`
+- `rollout_launch_probability`
+- `rollout_max_probability`
+- `rollout_ramp_years`
+- `rollout_takeoff_years`
 - `bands`
 
 ### `get_population_pyramid(query)`

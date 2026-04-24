@@ -2,6 +2,13 @@
 
 This file explains what the dashboard controls do and how to interpret the outputs.
 
+## Top-level views
+
+The dashboard has two main tabs:
+
+- `Results`: the projection plots, comparison panels, and exports
+- `Methods`: a scrollable explanation of the data inputs, yearly projection loop, intervention biology, rollout rules, and the currently active scenario
+
 ## Core controls
 
 ### Branch
@@ -14,7 +21,7 @@ Choose which intervention engine to use:
 
 Choose whether the drug changes:
 - `eta`: the rate of aging, or damage production, slows after treatment start
-- `eta_shift`: an immediate eta shift after treatment start, with `eta_new = eta_old * factor`
+- `eta_shift`: an immediate eta shift after treatment start, with `eta_new = eta_old * factor`; smaller factors mean stronger rejuvenation
 - `Xc`: robustness increases, which rectangularizes the survival curve
 
 ### Factor
@@ -64,12 +71,47 @@ $$
 
 - `threshold`: pick one cutoff age and one fixed treated share `p`
 - `banded`: use age bands, each with its own treated share
+- `rollout`: pick one eligibility age, one launch-year annual start chance, and a calendar-time popularity curve that raises the annual start chance after launch
 
 ### Start rule inside band
 
 - `absolute`: the band share starts at the lower edge of the band
 - `equal_probabilities`: untreated people inside the band all face the same yearly chance to start
 - `uniform_start_age`: yearly start probabilities are tuned so realized start ages are uniform across the band
+
+### Threshold controls
+
+- `threshold age`: the first eligible age
+- `probability of taking`: the share that starts at the first eligibility event
+
+This mode is not a catch-up model. If `p = 0.5`, then half of each cohort starts when it first becomes eligible and the untreated remainder stay untreated later.
+
+### Rollout controls
+
+- `eligibility age`: the first age at which someone can start
+- `launch-year annual chance`: the annual start chance for eligible untreated people in the launch year
+- `long-run annual cap`: the upper annual start chance after popularity saturates
+- `rollout curve`: either `linear` or `logistic`
+- `years to cap`: used by the linear rollout
+- `takeoff year after launch`: used by the logistic rollout
+
+Rollout keeps age-based eligibility, but changes the annual start chance over calendar time. This is the dashboard's "drug becomes more popular over time" mode.
+
+For years since launch $y$:
+
+$$
+p_{linear}(y) = p_0 + (p_{max} - p_0)\min\left(\frac{y}{T}, 1\right)
+$$
+
+and
+
+$$
+L(y) = \frac{1}{1 + \exp[-0.5(y - m)]},
+\qquad
+p_{logistic}(y) = p_0 + (p_{max} - p_0)\frac{L(y) - L(0)}{1 - L(0)}.
+$$
+
+Rollout scenarios are always projected on demand. They are intentionally excluded from the shipped summary catalog so the tracked repo stays compact.
 
 ## Main plots
 
@@ -87,7 +129,7 @@ This tracks how much mass accumulates at older ages.
 
 ### Treated-share heatmap
 
-This is the quickest way to verify whether the start rule is behaving as intended.
+This is the quickest way to verify whether the start rule is behaving as intended. It is especially useful for rollout scenarios because it shows both the age eligibility gate and the calendar-time popularity ramp.
 
 ### Survival curves
 
@@ -105,6 +147,14 @@ Important fields:
 - `untreated_population_count`
 - `branch`
 - `analytic_preset_id`
+- `uptake_mode`
+- `threshold_age`
+- `threshold_probability`
+- `rollout_curve`
+- `rollout_launch_probability`
+- `rollout_max_probability`
+- `rollout_ramp_years`
+- `rollout_takeoff_years`
 
 ### `summary.csv`
 
@@ -119,3 +169,11 @@ Important fields:
 - `old_age_share_65_plus`
 - `branch`
 - `analytic_preset_id`
+- `uptake_mode`
+- `threshold_age`
+- `threshold_probability`
+- `rollout_curve`
+- `rollout_launch_probability`
+- `rollout_max_probability`
+- `rollout_ramp_years`
+- `rollout_takeoff_years`

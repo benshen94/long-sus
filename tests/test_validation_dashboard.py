@@ -144,6 +144,56 @@ def _toy_demography_payload(inputs: VariantInputs) -> dict[str, object]:
 
 
 class ValidationDashboardTest(unittest.TestCase):
+    def _assert_js_projection_parity(
+        self,
+        *,
+        scenario,
+        inputs: VariantInputs,
+        intervention_asset: SRInterventionAsset,
+    ) -> None:
+        python_population, python_summary = project_scenario(scenario, inputs, intervention_asset)
+
+        payload = {
+            "inputs": _toy_demography_payload(inputs),
+            "scenario": scenario.__dict__,
+            "interventionAsset": {
+                "target": intervention_asset.target,
+                "factor": intervention_asset.factor,
+                "hetero_mode": intervention_asset.hetero_mode,
+                "start_ages": intervention_asset.start_ages.astype(int).tolist(),
+                "ages": intervention_asset.ages.astype(int).tolist(),
+                "annual_hazard_multiplier": intervention_asset.annual_hazard_multiplier.tolist(),
+                "baseline_survival": intervention_asset.baseline_survival.tolist(),
+                "survival_by_start_age": intervention_asset.survival_by_start_age.tolist(),
+            },
+        }
+
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
+            payload_path = Path(handle.name)
+            handle.write(json.dumps(payload))
+
+        try:
+            result = subprocess.run(
+                ["node", "tests/js_helpers/run_projection_parity.mjs", str(payload_path)],
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        finally:
+            payload_path.unlink(missing_ok=True)
+
+        js_output = json.loads(result.stdout)
+
+        self.assertEqual(
+            python_population["population_count"].round(8).tolist(),
+            [round(row["population_count"], 8) for row in js_output["populationRows"]],
+        )
+        self.assertEqual(
+            python_summary["total_population"].round(8).tolist(),
+            [round(row["total_population"], 8) for row in js_output["summaryRows"]],
+        )
+
     def test_dashboard_manifest_lists_multiple_areas(self) -> None:
         manifest_path = PROJECT_ROOT / "dashboard" / "assets" / "manifest.json"
         manifest = json.loads(manifest_path.read_text())
@@ -166,6 +216,24 @@ class ValidationDashboardTest(unittest.TestCase):
             analytic_preset_path = PROJECT_ROOT / "dashboard" / "assets" / area["paths"]["analytic_presets"].replace("./", "")
             self.assertTrue(demography_path.exists())
             self.assertTrue(analytic_preset_path.exists())
+
+    def test_dashboard_scenario_catalog_includes_rollout_presets(self) -> None:
+        scenario_catalog = json.loads((PROJECT_ROOT / "dashboard" / "assets" / "usa_validation_scenarios.json").read_text())
+        preset_ids = [preset["id"] for preset in scenario_catalog["presets"]]
+
+        self.assertIn("rollout_threshold_linear", preset_ids)
+        self.assertIn("rollout_threshold_logistic", preset_ids)
+        self.assertEqual(scenario_catalog["default_rollout_curve"], "linear")
+        self.assertEqual(int(scenario_catalog["default_rollout_launch_probability"]), 10)
+        self.assertEqual(int(scenario_catalog["default_rollout_max_probability"]), 50)
+
+    def test_dashboard_index_exposes_methods_tab_and_rollout_controls(self) -> None:
+        html = (PROJECT_ROOT / "dashboard" / "index.html").read_text()
+
+        self.assertIn('data-main-view="methods"', html)
+        self.assertIn('id="methods-stage"', html)
+        self.assertIn('data-uptake-mode="rollout"', html)
+        self.assertIn('id="rollout-curve"', html)
 
     def test_world_analytic_preset_is_default(self) -> None:
         preset = get_analytic_preset(default_analytic_preset_id())
@@ -430,6 +498,35 @@ class ValidationDashboardTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(row_age_2[4:], row_age_4[4:]))
 
+    def test_analytic_eta_shift_factor_below_one_improves_survival(self) -> None:
+        inputs = _toy_inputs()
+
+        better = build_analytic_intervention_asset(
+            inputs=inputs,
+            target="eta_shift",
+            factor=0.8,
+            launch_year=2024,
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+        baseline = build_analytic_intervention_asset(
+            inputs=inputs,
+            target="eta_shift",
+            factor=1.0,
+            launch_year=2024,
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+        worse = build_analytic_intervention_asset(
+            inputs=inputs,
+            target="eta_shift",
+            factor=1.2,
+            launch_year=2024,
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+
+        row_index = 3
+        self.assertGreater(better.survival_by_start_age[row_index, 5], baseline.survival_by_start_age[row_index, 5])
+        self.assertLess(worse.survival_by_start_age[row_index, 5], baseline.survival_by_start_age[row_index, 5])
+
     def test_no_one_matches_factor_one_threshold_projection(self) -> None:
         inputs = _toy_inputs()
         intervention_asset = _toy_intervention_asset(active_multiplier=1.0)
@@ -481,6 +578,42 @@ class ValidationDashboardTest(unittest.TestCase):
 
         self.assertTrue((old_age_rows["untreated_population_count"] == 0.0).all())
         self.assertTrue((old_age_rows["treated_population_count"] == old_age_rows["population_count"]).all())
+
+    def test_positive_old_age_migration_residual_uses_rollout_probability(self) -> None:
+        inputs = _toy_inputs()
+        for year in (2024, 2025, 2026):
+            inputs.population[year]["male"][4:] = 0.0
+            inputs.population[year]["female"][4:] = 0.0
+        inputs.migration_residual[2024]["male"][5] = 10.0
+        inputs.migration_residual[2024]["female"][5] = 10.0
+        intervention_asset = _toy_intervention_asset()
+
+        scenario = build_validation_scenario(
+            "rollout_threshold_linear",
+            target="eta",
+            factor=0.80,
+            projection_end_year=2025,
+            branch="analytic_arm",
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+        scenario = scenario.__class__(
+            **{
+                **scenario.__dict__,
+                "launch_year": 2024,
+                "threshold_age": 3,
+                "projection_end_year": 2025,
+                "rollout_launch_probability": 0.20,
+                "rollout_max_probability": 0.60,
+                "rollout_ramp_years": 2,
+            }
+        )
+
+        population, _ = project_scenario(scenario, inputs, intervention_asset)
+        old_age_rows = population[(population["year"] == 2025) & (population["age"] == 5)]
+
+        self.assertTrue((old_age_rows["population_count"] > 0.0).all())
+        self.assertTrue((old_age_rows["treated_population_count"] > 0.0).all())
+        self.assertTrue((old_age_rows["treated_population_count"] < old_age_rows["population_count"]).all())
 
     def test_different_start_schemes_diverge_when_effect_is_active(self) -> None:
         inputs = _toy_inputs()
@@ -695,6 +828,76 @@ class ValidationDashboardTest(unittest.TestCase):
         self.assertEqual(
             python_summary["total_population"].round(8).tolist(),
             [round(row["total_population"], 8) for row in js_output["summaryRows"]],
+        )
+
+    def test_js_projection_parity_for_linear_rollout(self) -> None:
+        inputs = _toy_inputs()
+        scenario = build_validation_scenario(
+            "rollout_threshold_linear",
+            target="eta",
+            factor=0.80,
+            projection_end_year=2026,
+            branch="analytic_arm",
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+        scenario = scenario.__class__(
+            **{
+                **scenario.__dict__,
+                "launch_year": 2024,
+                "threshold_age": 3,
+                "projection_end_year": 2026,
+                "rollout_launch_probability": 0.15,
+                "rollout_max_probability": 0.55,
+                "rollout_ramp_years": 4,
+            }
+        )
+        intervention_asset = build_analytic_intervention_asset(
+            inputs=inputs,
+            target="eta",
+            factor=0.8,
+            launch_year=2024,
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+
+        self._assert_js_projection_parity(
+            scenario=scenario,
+            inputs=inputs,
+            intervention_asset=intervention_asset,
+        )
+
+    def test_js_projection_parity_for_logistic_rollout(self) -> None:
+        inputs = _toy_inputs()
+        scenario = build_validation_scenario(
+            "rollout_threshold_logistic",
+            target="eta",
+            factor=0.80,
+            projection_end_year=2026,
+            branch="analytic_arm",
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+        scenario = scenario.__class__(
+            **{
+                **scenario.__dict__,
+                "launch_year": 2024,
+                "threshold_age": 3,
+                "projection_end_year": 2026,
+                "rollout_launch_probability": 0.15,
+                "rollout_max_probability": 0.55,
+                "rollout_takeoff_years": 4,
+            }
+        )
+        intervention_asset = build_analytic_intervention_asset(
+            inputs=inputs,
+            target="eta",
+            factor=0.8,
+            launch_year=2024,
+            analytic_preset_id="usa_period_2019_both_hazard",
+        )
+
+        self._assert_js_projection_parity(
+            scenario=scenario,
+            inputs=inputs,
+            intervention_asset=intervention_asset,
         )
 
     def test_js_threshold_projection_keeps_positive_old_age_migration_treated(self) -> None:
