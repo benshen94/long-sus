@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260416a";
-import { createInterventionStore } from "./interventions.mjs?v=20260416a";
+} from "./runtime.mjs?v=20260424a";
+import { createInterventionStore } from "./interventions.mjs?v=20260424a";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260416a";
+} from "./content.mjs?v=20260424a";
 
 
 const state = {
@@ -135,6 +135,7 @@ const elements = {
   actionPanel: document.querySelector(".action-panel"),
   resultsStage: document.getElementById("results-stage"),
   methodsStage: document.getElementById("methods-stage"),
+  apiStage: document.getElementById("api-stage"),
 };
 
 
@@ -805,7 +806,7 @@ function currentMainView() {
 
 
 function syncMainViewToggle(nextView) {
-  const safeView = ["results", "methods"].includes(nextView) ? nextView : "results";
+  const safeView = ["results", "methods", "api"].includes(nextView) ? nextView : "results";
   for (const button of mainViewButtons) {
     const isActive = button.dataset.mainView === safeView;
     button.classList.toggle("is-active", isActive);
@@ -819,6 +820,9 @@ function syncMainViewToggle(nextView) {
   }
   if (elements.methodsStage) {
     elements.methodsStage.hidden = safeView !== "methods";
+  }
+  if (elements.apiStage) {
+    elements.apiStage.hidden = safeView !== "api";
   }
 }
 
@@ -2394,7 +2398,7 @@ function connectInputs() {
       }
 
       event.preventDefault();
-      const views = ["results", "methods"];
+      const views = ["results", "methods", "api"];
       const currentIndex = views.indexOf(currentMainView());
       const direction = event.key === "ArrowRight" ? 1 : -1;
       const nextIndex = (currentIndex + direction + views.length) % views.length;

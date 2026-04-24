@@ -108,7 +108,7 @@ def create_app() -> FastAPI:
   </head>
   <body>
     <h1>Long-SUS API</h1>
-    <p>Use <code>/population-pyramid</code> for year-age-sex population rows and <code>/population-size</code> for yearly totals.</p>
+    <p>Use <code>/population-pyramid</code> for year-age-sex population rows and <code>/population-size</code> for yearly totals. CSV is the default response format.</p>
     <pre>/population-pyramid?country=World&scheme_id=threshold_age_60_all_eligible&target=Xc&factor=1.2&branch=analytic_arm&year=2050</pre>
     <p>Interactive schema: <a href="/docs">/docs</a></p>
   </body>
@@ -148,7 +148,7 @@ def create_app() -> FastAPI:
         rollout_takeoff_years: int | None = Query(None, gt=0),
         hetero_mode: str = Query("off"),
         source: str = Query("auto", examples=["auto", "catalog", "project"]),
-        format: OutputFormat = Query(OutputFormat.json),
+        format: OutputFormat = Query(OutputFormat.csv),
     ) -> Response:
         query = _build_query(
             country=country,
@@ -198,7 +198,7 @@ def create_app() -> FastAPI:
         rollout_takeoff_years: int | None = Query(None, gt=0),
         hetero_mode: str = Query("off"),
         source: str = Query("auto", examples=["auto", "catalog", "project"]),
-        format: OutputFormat = Query(OutputFormat.json),
+        format: OutputFormat = Query(OutputFormat.csv),
     ) -> Response:
         query = _build_query(
             country=country,

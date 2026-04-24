@@ -17,7 +17,7 @@ class HttpApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
-    def test_population_pyramid_returns_year_age_sex_rows(self) -> None:
+    def test_population_pyramid_returns_csv_by_default(self) -> None:
         response = self.client.get(
             "/population-pyramid",
             params={
@@ -27,6 +27,24 @@ class HttpApiTest(unittest.TestCase):
                 "factor": 1.2,
                 "branch": "analytic_arm",
                 "year": 2050,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response.headers["content-type"])
+        self.assertIn("population_count", response.text.splitlines()[0])
+
+    def test_population_pyramid_can_return_json_rows(self) -> None:
+        response = self.client.get(
+            "/population-pyramid",
+            params={
+                "country": "World",
+                "scheme_id": "threshold_age_60_all_eligible",
+                "target": "Xc",
+                "factor": 1.2,
+                "branch": "analytic_arm",
+                "year": 2050,
+                "format": "json",
             },
         )
 

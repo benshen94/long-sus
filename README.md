@@ -142,7 +142,7 @@ Then query population rows by URL:
 http://localhost:8000/population-pyramid?country=World&scheme_id=threshold_age_60_all_eligible&target=Xc&factor=1.2&branch=analytic_arm&year=2050
 ```
 
-The response includes `population_count`, `treated_population_count`, and `untreated_population_count` for each `year`, `sex`, and `age`. Add `format=csv` to get CSV instead of JSON.
+The response is CSV by default and includes `population_count`, `treated_population_count`, and `untreated_population_count` for each `year`, `sex`, and `age`. Add `format=json` if a program needs JSON instead.
 
 ## Python Quickstart
 

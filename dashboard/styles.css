@@ -375,6 +375,90 @@ h1 {
   color: white;
 }
 
+.api-stage {
+  display: block;
+}
+
+.api-stage-inner {
+  display: grid;
+  gap: 1rem;
+}
+
+.api-section {
+  padding: 1.05rem;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--paper) 92%, white 8%);
+  border: 1px solid rgba(107, 96, 81, 0.18);
+  box-shadow: var(--shadow);
+}
+
+.api-section h3 {
+  margin-bottom: 0.65rem;
+  font-size: 1.65rem;
+}
+
+.api-code {
+  margin: 0;
+  padding: 0.9rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-radius: 10px;
+  background: rgba(22, 49, 77, 0.08);
+  border: 1px solid rgba(22, 49, 77, 0.16);
+  color: var(--navy);
+  line-height: 1.5;
+}
+
+.api-code code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+}
+
+.api-table-wrap {
+  overflow-x: auto;
+}
+
+.api-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.api-table th,
+.api-table td {
+  padding: 0.72rem 0.65rem;
+  border-bottom: 1px solid rgba(121, 111, 95, 0.18);
+  text-align: left;
+  vertical-align: top;
+}
+
+.api-table th {
+  color: var(--clay-deep);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.api-link-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.api-link-grid a {
+  display: grid;
+  place-items: center;
+  min-height: 46px;
+  padding: 0.7rem;
+  border-radius: 10px;
+  background: var(--navy);
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 700;
+}
+
 .mobile-only {
   display: none;
 }

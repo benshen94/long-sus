@@ -29,10 +29,16 @@ Example:
 http://localhost:8000/population-pyramid?country=World&scheme_id=threshold_age_60_all_eligible&target=Xc&factor=1.2&branch=analytic_arm&year=2050
 ```
 
-CSV:
+CSV is the default response format:
 
 ```text
-http://localhost:8000/population-pyramid?country=World&scheme_id=threshold_age_60_all_eligible&target=Xc&factor=1.2&branch=analytic_arm&year=2050&format=csv
+http://localhost:8000/population-pyramid?country=World&scheme_id=threshold_age_60_all_eligible&target=Xc&factor=1.2&branch=analytic_arm&year=2050
+```
+
+JSON:
+
+```text
+http://localhost:8000/population-pyramid?country=World&scheme_id=threshold_age_60_all_eligible&target=Xc&factor=1.2&branch=analytic_arm&year=2050&format=json
 ```
 
 Important output fields:

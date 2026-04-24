@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260416a">
+    <link rel="stylesheet" href="./styles.css?v=20260424a">
     <script src="./vendor/plotly-2.35.2.min.js"></script>
   </head>
   <body>
@@ -35,6 +35,15 @@
             aria-controls="methods-stage"
             tabindex="-1"
           >Methods</button>
+          <button
+            type="button"
+            class="stage-view-pill"
+            data-main-view="api"
+            role="tab"
+            aria-selected="false"
+            aria-controls="api-stage"
+            tabindex="-1"
+          >API Instructions</button>
         </div>
         <button id="mobile-exports-open" type="button" class="ghost mobile-only">Exports</button>
       </div>
@@ -466,11 +475,78 @@
         </section>
 
         <section class="methods-stage" id="methods-stage" hidden></section>
+
+        <section class="api-stage" id="api-stage" hidden>
+          <article class="api-stage-inner">
+            <header class="methods-hero">
+              <div class="methods-hero-copy">
+                <p class="eyebrow">API Instructions</p>
+                <h2>Use the Long-SUS model from a URL.</h2>
+                <p class="methods-lead">The hosted API returns CSV by default, so it can be opened in a browser, downloaded, or read directly by another dashboard.</p>
+              </div>
+            </header>
+
+            <section class="api-section">
+              <p class="eyebrow">Base URL</p>
+              <h3>Start here</h3>
+              <pre class="api-code"><code>https://long-sus-api.onrender.com</code></pre>
+              <p class="plot-note">Render free services sleep after idle time. The first request can take about a minute, then later requests are faster.</p>
+            </section>
+
+            <section class="api-section">
+              <p class="eyebrow">Population by age and sex</p>
+              <h3>CSV rows for one projection year</h3>
+              <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=threshold_age_60_all_eligible&amp;target=Xc&amp;factor=1.2&amp;branch=analytic_arm&amp;year=2050</code></pre>
+              <p class="plot-note">This returns one CSV row per sex and age. The key columns are year, sex, age, population_count, treated_population_count, and untreated_population_count.</p>
+            </section>
+
+            <section class="api-section">
+              <p class="eyebrow">Yearly totals</p>
+              <h3>CSV rows for population summaries</h3>
+              <pre class="api-code"><code>https://long-sus-api.onrender.com/population-size?country=World&amp;scheme_id=threshold_age_60_all_eligible&amp;target=Xc&amp;factor=1.2&amp;branch=analytic_arm</code></pre>
+              <p class="plot-note">This returns yearly totals, including total_population, treated_population, treated_share, births, deaths, median_age, and old_age_share_65_plus.</p>
+            </section>
+
+            <section class="api-section">
+              <p class="eyebrow">Change the query</p>
+              <h3>Common parameters</h3>
+              <div class="api-table-wrap">
+                <table class="api-table">
+                  <thead>
+                    <tr>
+                      <th>Parameter</th>
+                      <th>What to put</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>country</td><td>World, USA, China, India, Israel, Italy, Brazil, Nigeria, South Africa, or Uganda</td></tr>
+                    <tr><td>scheme_id</td><td>threshold_age_60_all_eligible is the simplest treatment rule</td></tr>
+                    <tr><td>target</td><td>eta, eta_shift, Xc, or none</td></tr>
+                    <tr><td>factor</td><td>Intervention strength, such as 1.2 for Xc or 0.8 for eta</td></tr>
+                    <tr><td>year</td><td>Projection year, required for population-pyramid</td></tr>
+                    <tr><td>format</td><td>csv by default; add format=json only if a program needs JSON</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="api-section">
+              <p class="eyebrow">Quick checks</p>
+              <h3>Useful links</h3>
+              <div class="api-link-grid">
+                <a href="https://long-sus-api.onrender.com/health" target="_blank" rel="noreferrer">Health check</a>
+                <a href="https://long-sus-api.onrender.com/countries" target="_blank" rel="noreferrer">Supported countries</a>
+                <a href="https://long-sus-api.onrender.com/schemes" target="_blank" rel="noreferrer">Supported treatment rules</a>
+                <a href="https://long-sus-api.onrender.com/docs" target="_blank" rel="noreferrer">Interactive API docs</a>
+              </div>
+            </section>
+          </article>
+        </section>
       </main>
 
       <div class="modal-backdrop" id="exports-modal-backdrop" hidden></div>
     </div>
 
-    <script type="module" src="./app.mjs?v=20260416a"></script>
+    <script type="module" src="./app.mjs?v=20260424a"></script>
   </body>
 </html>
