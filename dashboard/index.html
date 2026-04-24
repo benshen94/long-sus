@@ -501,6 +501,60 @@
             </section>
 
             <section class="api-section">
+              <p class="eyebrow">Treatment examples</p>
+              <h3>Copy one URL and change the country, year, target, or factor.</h3>
+              <div class="api-example-grid">
+                <article class="api-example-card">
+                  <h4>Untreated baseline</h4>
+                  <p>No one starts treatment. Use this as the reference projection.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=no_one&amp;target=none&amp;factor=1.0&amp;branch=analytic_arm&amp;year=2050</code></pre>
+                </article>
+
+                <article class="api-example-card">
+                  <h4>Everyone treated immediately</h4>
+                  <p>Everyone alive at launch starts, and later births are treated from birth.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=everyone&amp;target=eta&amp;factor=0.8&amp;branch=analytic_arm&amp;year=2050</code></pre>
+                </article>
+
+                <article class="api-example-card">
+                  <h4>Threshold age</h4>
+                  <p>Everyone age 60+ starts. Younger cohorts start when they reach age 60.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=threshold_age_60_all_eligible&amp;target=Xc&amp;factor=1.2&amp;branch=analytic_arm&amp;year=2050</code></pre>
+                </article>
+
+                <article class="api-example-card">
+                  <h4>Custom threshold share</h4>
+                  <p>Only half of each cohort starts when first eligible at age 60.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=threshold_age_60_all_eligible&amp;target=eta&amp;factor=0.8&amp;branch=analytic_arm&amp;year=2050&amp;threshold_age=60&amp;threshold_probability=0.5</code></pre>
+                </article>
+
+                <article class="api-example-card">
+                  <h4>Age bands, immediate starts</h4>
+                  <p>35% of ages 20-39, 65% of ages 40-64, and 95% of ages 65+ start at each band edge.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=prescription_bands_absolute&amp;target=Xc&amp;factor=1.2&amp;branch=analytic_arm&amp;year=2050</code></pre>
+                </article>
+
+                <article class="api-example-card">
+                  <h4>Age bands, spread starts</h4>
+                  <p>Same target shares, but starts are spread through each age band.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=prescription_bands_equal_probabilities&amp;target=Xc&amp;factor=1.2&amp;branch=analytic_arm&amp;year=2050</code></pre>
+                </article>
+
+                <article class="api-example-card">
+                  <h4>Linear rollout</h4>
+                  <p>Eligibility starts at age 60. Annual take-up rises from 10% to 50% over 12 years.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=rollout_threshold_linear&amp;target=eta&amp;factor=0.8&amp;branch=analytic_arm&amp;year=2050</code></pre>
+                </article>
+
+                <article class="api-example-card">
+                  <h4>Custom logistic rollout</h4>
+                  <p>Use an S-curve adoption path and override the launch chance, long-run cap, and takeoff timing.</p>
+                  <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=rollout_threshold_logistic&amp;target=eta&amp;factor=0.8&amp;branch=analytic_arm&amp;year=2050&amp;rollout_launch_probability=0.15&amp;rollout_max_probability=0.55&amp;rollout_takeoff_years=9</code></pre>
+                </article>
+              </div>
+            </section>
+
+            <section class="api-section">
               <p class="eyebrow">Yearly totals</p>
               <h3>CSV rows for population summaries</h3>
               <pre class="api-code"><code>https://long-sus-api.onrender.com/population-size?country=World&amp;scheme_id=threshold_age_60_all_eligible&amp;target=Xc&amp;factor=1.2&amp;branch=analytic_arm</code></pre>
@@ -520,10 +574,16 @@
                   </thead>
                   <tbody>
                     <tr><td>country</td><td>World, USA, China, India, Israel, Italy, Brazil, Nigeria, South Africa, or Uganda</td></tr>
-                    <tr><td>scheme_id</td><td>threshold_age_60_all_eligible is the simplest treatment rule</td></tr>
-                    <tr><td>target</td><td>eta, eta_shift, Xc, or none</td></tr>
+                    <tr><td>scheme_id</td><td>no_one, everyone, threshold_age_60_all_eligible, prescription_bands_absolute, prescription_bands_equal_probabilities, prescription_bands_uniform_start_age, rollout_threshold_linear, or rollout_threshold_logistic</td></tr>
+                    <tr><td>target</td><td>eta, eta_shift, Xc, or none. Use target=none only with scheme_id=no_one</td></tr>
                     <tr><td>factor</td><td>Intervention strength, such as 1.2 for Xc or 0.8 for eta</td></tr>
                     <tr><td>year</td><td>Projection year, required for population-pyramid</td></tr>
+                    <tr><td>threshold_age</td><td>Optional override for threshold and rollout examples</td></tr>
+                    <tr><td>threshold_probability</td><td>Optional treated share for threshold examples, from 0.0 to 1.0</td></tr>
+                    <tr><td>rollout_launch_probability</td><td>Optional launch-year annual start chance for rollout examples</td></tr>
+                    <tr><td>rollout_max_probability</td><td>Optional long-run annual start cap for rollout examples</td></tr>
+                    <tr><td>rollout_ramp_years</td><td>Optional timing control for linear rollout</td></tr>
+                    <tr><td>rollout_takeoff_years</td><td>Optional timing control for logistic rollout</td></tr>
                     <tr><td>format</td><td>csv by default; add format=json only if a program needs JSON</td></tr>
                   </tbody>
                 </table>
