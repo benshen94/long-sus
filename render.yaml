@@ -2,5 +2,5 @@ services:
   - type: web
     name: long-sus-api
     env: docker
-    plan: starter
+    plan: free
     healthCheckPath: /health
