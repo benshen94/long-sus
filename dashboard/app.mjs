@@ -6,14 +6,14 @@ import {
   buildPyramidSeries,
   projectScenario,
   rowsToCsv,
-} from "./runtime.mjs?v=20260424a";
-import { createInterventionStore } from "./interventions.mjs?v=20260424a";
+} from "./runtime.mjs?v=20260510a";
+import { createInterventionStore } from "./interventions.mjs?v=20260510a";
 import {
   describePreset,
   describeUptakeMode,
   explainScenarioStrategy,
   renderMethodsView,
-} from "./content.mjs?v=20260424a";
+} from "./content.mjs?v=20260510a";
 
 
 const state = {
@@ -1334,9 +1334,9 @@ function updateControlVisibility() {
   elements.schemeExplainer.textContent = `${explainScenarioStrategy(buildActiveScenario())} Branch: ${branchLabel(activeBranch)}.`;
 
   if (compareIsBaseline) {
-    elements.compareExplainer.textContent = `Comparison scenario is the untreated baseline on the ${branchLabel(compareBranch)} branch.`;
+    elements.compareExplainer.textContent = `UN projection is the vanilla untreated reference on the ${branchLabel(compareBranch)} branch.`;
   } else {
-    elements.compareExplainer.textContent = `${explainScenarioStrategy(buildCompareScenario())} Branch: ${branchLabel(compareBranch)}.`;
+    elements.compareExplainer.textContent = `Reference projection: ${explainScenarioStrategy(buildCompareScenario())} Branch: ${branchLabel(compareBranch)}.`;
   }
   refreshHelpText();
 }
@@ -1576,7 +1576,7 @@ function renderPopulationShareTrajectory(activeRows, compareRows, thresholdAge) 
       type: "scatter",
       mode: "lines",
       line: { color: "#16314d", width: 3 },
-      name: "Active scenario",
+      name: "Active treatment",
     },
     {
       x: compareRows.map((row) => row.year),
@@ -1584,7 +1584,7 @@ function renderPopulationShareTrajectory(activeRows, compareRows, thresholdAge) 
       type: "scatter",
       mode: "lines",
       line: { color: "#d35f3d", width: 3, dash: "dot" },
-      name: "Comparison scenario",
+      name: "UN projection",
     },
   ], {
     paper_bgcolor: "rgba(0,0,0,0)",
@@ -1616,7 +1616,7 @@ function renderPopulationShareComposition(activeRows, compareRows, thresholdAge)
       type: "bar",
       x: yearLabels,
       y: decadeYears.map((year) => (activeLookup.get(year)?.belowShare ?? 0) * 100),
-      name: `Active below ${thresholdAge}`,
+      name: `Active treatment below ${thresholdAge}`,
       marker: { color: "#aeb8cf" },
       offsetgroup: "active",
       legendgroup: "active_below",
@@ -1625,7 +1625,7 @@ function renderPopulationShareComposition(activeRows, compareRows, thresholdAge)
       type: "bar",
       x: yearLabels,
       y: decadeYears.map((year) => (activeLookup.get(year)?.aboveShare ?? 0) * 100),
-      name: `Active age ${thresholdAge}+`,
+      name: `Active treatment age ${thresholdAge}+`,
       marker: { color: "#16314d" },
       offsetgroup: "active",
       legendgroup: "active_above",
@@ -1634,7 +1634,7 @@ function renderPopulationShareComposition(activeRows, compareRows, thresholdAge)
       type: "bar",
       x: yearLabels,
       y: decadeYears.map((year) => (compareLookup.get(year)?.belowShare ?? 0) * 100),
-      name: `Comparison below ${thresholdAge}`,
+      name: `UN projection below ${thresholdAge}`,
       marker: { color: "#f0b29f" },
       offsetgroup: "compare",
       legendgroup: "compare_below",
@@ -1643,7 +1643,7 @@ function renderPopulationShareComposition(activeRows, compareRows, thresholdAge)
       type: "bar",
       x: yearLabels,
       y: decadeYears.map((year) => (compareLookup.get(year)?.aboveShare ?? 0) * 100),
-      name: `Comparison age ${thresholdAge}+`,
+      name: `UN projection age ${thresholdAge}+`,
       marker: { color: "#d35f3d" },
       offsetgroup: "compare",
       legendgroup: "compare_above",
@@ -1687,7 +1687,7 @@ function renderLineCharts() {
       type: "scatter",
       mode: "lines",
       line: { color: "#16314d", width: 3 },
-      name: "Active scenario",
+      name: "Active treatment",
     },
     {
       x: compareTotal.x,
@@ -1695,7 +1695,7 @@ function renderLineCharts() {
       type: "scatter",
       mode: "lines",
       line: { color: "#d35f3d", width: 3, dash: "dot" },
-      name: "Comparison scenario",
+      name: "UN projection",
     },
   ], {
     paper_bgcolor: "rgba(0,0,0,0)",
@@ -1802,7 +1802,7 @@ function renderSurvivalChart() {
       type: "scatter",
       mode: "lines",
       line: { color: "#16314d", width: 3 },
-      name: "Active scenario",
+      name: "Active treatment",
     },
     {
       x: ages,
@@ -1810,7 +1810,7 @@ function renderSurvivalChart() {
       type: "scatter",
       mode: "lines",
       line: { color: "#d35f3d", width: 3, dash: "dot" },
-      name: "Comparison scenario",
+      name: "UN projection",
     },
   ], {
     paper_bgcolor: "rgba(0,0,0,0)",
@@ -2105,14 +2105,14 @@ async function projectAndRender() {
     elements.pyramidChart,
     state.activeResult,
     selectedYear,
-    `Active scenario · ${selectedYear}`,
+    `Active treatment · ${selectedYear}`,
     { untreated: "#aeb8cf", treated: "#16314d" },
   );
   renderPopulationChart(
     elements.comparePyramidChart,
     state.compareResult,
     selectedYear,
-    `Comparison scenario · ${selectedYear}`,
+    `UN projection · ${selectedYear}`,
     { untreated: "#f0b29f", treated: "#8e2f21" },
   );
   renderLineCharts();
@@ -2460,14 +2460,14 @@ function connectInputs() {
         elements.pyramidChart,
         state.activeResult,
         selectedYear,
-        `Active scenario · ${selectedYear}`,
+        `Active treatment · ${selectedYear}`,
         { untreated: "#aeb8cf", treated: "#16314d" },
       );
       renderPopulationChart(
         elements.comparePyramidChart,
         state.compareResult,
         selectedYear,
-        `Comparison scenario · ${selectedYear}`,
+        `UN projection · ${selectedYear}`,
         { untreated: "#f0b29f", treated: "#8e2f21" },
       );
       renderMethodsStage(buildActiveScenario());
@@ -2568,14 +2568,14 @@ function connectInputs() {
       elements.pyramidChart,
       state.activeResult,
       selectedYear,
-      `Active scenario · ${selectedYear}`,
+      `Active treatment · ${selectedYear}`,
       { untreated: "#aeb8cf", treated: "#16314d" },
     );
     renderPopulationChart(
       elements.comparePyramidChart,
       state.compareResult,
       selectedYear,
-      `Comparison scenario · ${selectedYear}`,
+      `UN projection · ${selectedYear}`,
       { untreated: "#f0b29f", treated: "#8e2f21" },
     );
     renderMethodsStage(buildActiveScenario());
@@ -2613,14 +2613,14 @@ function connectViewportResize() {
         elements.pyramidChart,
         state.activeResult,
         selectedYear,
-        `Active scenario · ${selectedYear}`,
+        `Active treatment · ${selectedYear}`,
         { untreated: "#aeb8cf", treated: "#16314d" },
       );
       renderPopulationChart(
         elements.comparePyramidChart,
         state.compareResult,
         selectedYear,
-        `Comparison scenario · ${selectedYear}`,
+        `UN projection · ${selectedYear}`,
         { untreated: "#f0b29f", treated: "#8e2f21" },
       );
       renderLineCharts();

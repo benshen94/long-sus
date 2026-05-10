@@ -129,7 +129,7 @@ class UptakeTest(unittest.TestCase):
         self.assertTrue(math.isclose(rollout_probability_for_year(scenario, 2027), 0.30))
         self.assertTrue(math.isclose(rollout_probability_for_year(scenario, 2030), 0.50))
 
-    def test_logistic_rollout_probability_matches_pdf_formula(self) -> None:
+    def test_logistic_rollout_probability_reaches_cap_at_selected_duration(self) -> None:
         scenario = ScenarioSpec(
             name="rollout_logistic",
             launch_year=2025,
@@ -137,21 +137,17 @@ class UptakeTest(unittest.TestCase):
             threshold_age=60,
             rollout_curve="logistic",
             rollout_launch_probability=0.10,
-            rollout_max_probability=0.50,
-            rollout_takeoff_years=8,
+            rollout_max_probability=0.80,
+            rollout_takeoff_years=10,
             target="eta",
             factor=0.80,
         )
 
-        baseline = 1.0 / (1.0 + math.exp(0.5 * 8))
-        current = 1.0 / (1.0 + math.exp(-0.5 * (8 - 8)))
-        scaled = (current - baseline) / (1.0 - baseline)
-        expected = 0.10 + ((0.50 - 0.10) * scaled)
-
         self.assertTrue(math.isclose(rollout_probability_for_year(scenario, 2025), 0.10))
-        self.assertTrue(math.isclose(rollout_probability_for_year(scenario, 2033), expected))
+        self.assertTrue(math.isclose(rollout_probability_for_year(scenario, 2030), 0.45))
+        self.assertTrue(math.isclose(rollout_probability_for_year(scenario, 2035), 0.80))
 
-    def test_rollout_start_probability_requires_eligibility(self) -> None:
+    def test_rollout_start_probability_reaches_target_share_without_compounding(self) -> None:
         scenario = ScenarioSpec(
             name="rollout_start_probability",
             launch_year=2025,
@@ -166,14 +162,17 @@ class UptakeTest(unittest.TestCase):
         )
 
         self.assertEqual(start_probability_by_age(scenario, age=59, year=2030, max_age=MAX_AGE), 0.0)
+        previous_target = 0.26
+        target = 0.30
+        expected_start_share = (target - previous_target) / (1.0 - previous_target)
         self.assertTrue(
             math.isclose(
                 start_probability_by_age(scenario, age=60, year=2030, max_age=MAX_AGE),
-                0.30,
+                expected_start_share,
             )
         )
 
-    def test_rollout_lifetime_weights_reduce_untreated_share_geometrically(self) -> None:
+    def test_rollout_lifetime_weights_follow_calendar_target_share(self) -> None:
         scenario = ScenarioSpec(
             name="rollout_weights",
             launch_year=2025,
@@ -193,10 +192,10 @@ class UptakeTest(unittest.TestCase):
         )
 
         self.assertTrue(math.isclose(weights[0], 0.20))
-        self.assertTrue(math.isclose(weights[1], 0.32))
-        self.assertTrue(math.isclose(weights[2], 0.288))
-        self.assertTrue(math.isclose(weights[3], 0.1152))
-        self.assertTrue(math.isclose(untreated_share, 0.0768))
+        self.assertTrue(math.isclose(weights[1], 0.20))
+        self.assertTrue(math.isclose(weights[2], 0.20))
+        self.assertTrue(math.isclose(weights[3], 0.0))
+        self.assertTrue(math.isclose(untreated_share, 0.40))
 
     def test_lifetime_weights_for_absolute_bands_leave_untreated_remainder(self) -> None:
         scenario = ScenarioSpec(

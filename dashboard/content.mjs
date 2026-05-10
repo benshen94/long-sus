@@ -27,7 +27,7 @@ const UPTAKE_MODE_COPY = {
   rollout: {
     title: "Rollout",
     short: "Eligibility by age, adoption by calendar-time popularity.",
-    description: "Rollout keeps one eligibility age, but the annual chance of starting gets stronger after launch as the drug becomes more popular. Untreated eligible people keep getting another yearly chance to start, and once they start they stay on treatment.",
+    description: "Rollout keeps one eligibility age, but the target treated share rises after launch as the drug becomes more common. The model starts enough untreated eligible people each year to reach the next target share, and once they start they stay on treatment.",
   },
 };
 
@@ -109,9 +109,9 @@ export function explainScenarioStrategy(scenario) {
   }
 
   if (scenario.uptake_mode === "rollout") {
-    const base = `Eligibility starts at age ${scenario.threshold_age}. Untreated eligible people face a ${formatPercent(scenario.rollout_launch_probability)} annual start chance at launch, rising toward ${formatPercent(scenario.rollout_max_probability)} as popularity grows.`;
+    const base = `Eligibility starts at age ${scenario.threshold_age}. The treated share among eligible people targets ${formatPercent(scenario.rollout_launch_probability)} at launch, rising toward ${formatPercent(scenario.rollout_max_probability)} as uptake grows.`;
     if (scenario.rollout_curve === "logistic") {
-      return `${base} The curve uses an S-shape with takeoff around ${scenario.rollout_takeoff_years} years after launch.`;
+      return `${base} The curve uses an S-shape that reaches the long-run share after about ${scenario.rollout_takeoff_years} years.`;
     }
     return `${base} The curve ramps linearly and reaches its cap after ${scenario.rollout_ramp_years} years.`;
   }
@@ -136,13 +136,13 @@ function currentScenarioRows(context) {
     rows.push(["Start share", formatPercent(context.activeScenario.threshold_probability)]);
   } else if (context.activeScenario.uptake_mode === "rollout") {
     rows.push(["Eligibility", `Ages ${context.activeScenario.threshold_age}+`]);
-    rows.push(["Launch-year annual chance", formatPercent(context.activeScenario.rollout_launch_probability)]);
-    rows.push(["Long-run annual cap", formatPercent(context.activeScenario.rollout_max_probability)]);
+    rows.push(["Launch-year treated share", formatPercent(context.activeScenario.rollout_launch_probability)]);
+    rows.push(["Long-run treated share", formatPercent(context.activeScenario.rollout_max_probability)]);
     rows.push(["Curve shape", context.activeScenario.rollout_curve === "logistic" ? "Logistic S-curve" : "Linear ramp"]);
     rows.push([
       "Timing",
       context.activeScenario.rollout_curve === "logistic"
-        ? `Takeoff around year ${context.activeScenario.rollout_takeoff_years}`
+        ? `Plateau reached after ${context.activeScenario.rollout_takeoff_years} years`
         : `Cap reached after ${context.activeScenario.rollout_ramp_years} years`,
     ]);
   } else {
@@ -353,7 +353,7 @@ export function renderMethodsView(container, context) {
               <p class="methods-footnote">${timingNote}</p>
               <ul class="methods-list">
                 <li>Linear rollout: annual take-up rises in a straight line from the launch-year chance to the long-run cap.</li>
-                <li>Logistic rollout: annual take-up follows an S-curve, slower at first, faster in the middle, then saturating later.</li>
+                <li>Logistic rollout: target treated share follows an S-curve, slower at first, faster in the middle, then saturating at the selected plateau year.</li>
               </ul>
             </div>
           </div>

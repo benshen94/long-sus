@@ -40,14 +40,40 @@ def rollout_probability_for_year(
         return launch_probability + ((max_probability - launch_probability) * progress)
 
     if scenario.rollout_curve == "logistic":
-        takeoff_years = max(int(scenario.rollout_takeoff_years), 1)
-        baseline = 1.0 / (1.0 + math.exp(0.5 * takeoff_years))
-        current = 1.0 / (1.0 + math.exp(-0.5 * (years_since_launch - takeoff_years)))
-        scaled = (current - baseline) / (1.0 - baseline)
+        duration_years = max(int(scenario.rollout_takeoff_years), 1)
+        steepness = 12.0 / duration_years
+        midpoint = duration_years / 2.0
+        start = 1.0 / (1.0 + math.exp(steepness * midpoint))
+        end = 1.0 / (1.0 + math.exp(-steepness * (duration_years - midpoint)))
+        current = 1.0 / (1.0 + math.exp(-steepness * (years_since_launch - midpoint)))
+        scaled = (current - start) / (end - start)
         scaled = float(np.clip(scaled, 0.0, 1.0))
         return launch_probability + ((max_probability - launch_probability) * scaled)
 
     raise ValueError(f"Unsupported rollout curve: {scenario.rollout_curve}")
+
+
+def rollout_start_probability_for_year(
+    scenario: ScenarioSpec,
+    year: int,
+) -> float:
+    if year < scenario.launch_year:
+        return 0.0
+
+    target_share = rollout_probability_for_year(scenario, year)
+    if year == scenario.launch_year:
+        return target_share
+
+    previous_target_share = rollout_probability_for_year(scenario, year - 1)
+    untreated_previous_share = 1.0 - previous_target_share
+    if untreated_previous_share <= 0.0:
+        return 0.0
+
+    needed_share = target_share - previous_target_share
+    if needed_share <= 0.0:
+        return 0.0
+
+    return _clamped_probability(needed_share / untreated_previous_share)
 
 
 def resolve_age_bands(
@@ -103,7 +129,7 @@ def _rollout_probability(age: int, year: int, scenario: ScenarioSpec) -> float:
         return 0.0
     if age < scenario.threshold_age:
         return 0.0
-    return rollout_probability_for_year(scenario, year)
+    return rollout_start_probability_for_year(scenario, year)
 
 
 def _absolute_probability(age: int, year: int, scenario: ScenarioSpec, band: ResolvedBand) -> float:
@@ -238,7 +264,7 @@ def build_lifetime_start_weights(
                 return weights, 0.0
 
             year = scenario.launch_year + age
-            probability = rollout_probability_for_year(scenario, year)
+            probability = rollout_start_probability_for_year(scenario, year)
             start_share = untreated_share * probability
             weights[age] += start_share
             untreated_share -= start_share

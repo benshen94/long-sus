@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260424a">
+    <link rel="stylesheet" href="./styles.css?v=20260510a">
     <script src="./vendor/plotly-2.35.2.min.js"></script>
   </head>
   <body>
@@ -108,8 +108,8 @@
 
         <section class="panel">
           <div class="panel-head">
-            <p class="eyebrow">Active scenario</p>
-            <h2>Build the run</h2>
+            <p class="eyebrow">Active treatment</p>
+            <h2>Build the intervention</h2>
           </div>
 
           <label class="field">
@@ -170,12 +170,12 @@
 
           <div class="field-grid two-up" id="rollout-settings" hidden>
             <label class="field">
-              <span>Launch-year annual chance (%)</span>
+              <span>Launch-year treated share (%)</span>
               <input id="rollout-launch-probability" type="number" min="0" max="100" step="1" value="10">
             </label>
 
             <label class="field">
-              <span>Long-run annual cap (%)</span>
+              <span>Long-run treated share (%)</span>
               <input id="rollout-max-probability" type="number" min="0" max="100" step="1" value="50">
             </label>
           </div>
@@ -195,7 +195,7 @@
             </label>
 
             <label class="field" id="rollout-takeoff-years-field" hidden>
-              <span>Takeoff year after launch</span>
+              <span>Years to plateau</span>
               <input id="rollout-takeoff-years" type="number" min="1" max="100" step="1" value="8">
             </label>
           </div>
@@ -291,46 +291,46 @@
 
         <section class="panel">
           <div class="panel-head">
-            <p class="eyebrow">Comparison</p>
-            <h2>Second run</h2>
+            <p class="eyebrow">UN projection</p>
+            <h2>Vanilla reference</h2>
           </div>
 
           <div class="action-stack compact">
-            <button id="compare-to-vanilla" type="button" class="ghost">Compare Against Vanilla</button>
+            <button id="compare-to-vanilla" type="button" class="ghost">Reset to vanilla UN</button>
           </div>
 
           <label class="field">
-            <span>Comparison preset</span>
+            <span>Reference preset</span>
             <select id="compare-preset-select"></select>
           </label>
 
           <label class="field" hidden>
-            <span>Comparison branch</span>
+            <span>Reference branch</span>
             <select id="compare-branch-select"></select>
           </label>
 
           <label class="field">
-            <span>Comparison intervention</span>
+            <span>Reference intervention</span>
             <select id="compare-target-select"></select>
           </label>
 
           <label class="field" id="compare-factor-select-field" hidden>
-            <span>Comparison factor</span>
+            <span>Reference factor</span>
             <select id="compare-factor-select"></select>
           </label>
 
           <label class="field" id="compare-factor-input-field">
-            <span>Comparison factor</span>
+            <span>Reference factor</span>
             <input id="compare-factor-input" type="number" min="0.50" max="1.60" step="0.01" value="1.00">
           </label>
 
           <label class="field" id="compare-hetero-field" hidden>
-            <span>Comparison baseline</span>
+            <span>Reference baseline</span>
             <select id="compare-hetero-mode"></select>
           </label>
 
           <label class="field" id="compare-analytic-preset-field">
-            <span>Comparison hazard-fit preset</span>
+            <span>Reference hazard-fit preset</span>
             <select id="compare-analytic-preset-select"></select>
           </label>
 
@@ -369,7 +369,7 @@
           <header class="hero">
             <div class="hero-copy">
               <p class="eyebrow">Interactive validation</p>
-              <h2>Build and compare a treatment rule.</h2>
+              <h2>Compare vanilla UN projection to a longevity treatment.</h2>
             </div>
             <div class="hero-metrics" id="hero-metrics"></div>
             <div class="timeline-bar hero-toolbar">
@@ -391,18 +391,18 @@
           <section class="pyramid-grid">
             <article class="plot-frame">
               <div class="plot-header">
-                <p class="eyebrow">Active scenario</p>
-                <h3 id="active-scenario-label">Loading</h3>
+                <p class="eyebrow">UN projection</p>
+                <h3 id="compare-scenario-label">Loading</h3>
               </div>
-              <div class="plot-surface" id="pyramid-chart"></div>
+              <div class="plot-surface" id="compare-pyramid-chart"></div>
             </article>
 
             <article class="plot-frame compare-frame">
               <div class="plot-header">
-                <p class="eyebrow">Comparison scenario</p>
-                <h3 id="compare-scenario-label">Loading</h3>
+                <p class="eyebrow">Active treatment</p>
+                <h3 id="active-scenario-label">Loading</h3>
               </div>
-              <div class="plot-surface" id="compare-pyramid-chart"></div>
+              <div class="plot-surface" id="pyramid-chart"></div>
             </article>
           </section>
 
@@ -548,7 +548,7 @@
 
                 <article class="api-example-card">
                   <h4>Custom logistic rollout</h4>
-                  <p>Use an S-curve adoption path and override the launch chance, long-run cap, and takeoff timing.</p>
+                  <p>Use an S-curve coverage path and override the launch share, long-run treated share, and years to plateau.</p>
                   <pre class="api-code"><code>https://long-sus-api.onrender.com/population-pyramid?country=World&amp;scheme_id=rollout_threshold_logistic&amp;target=eta&amp;factor=0.8&amp;branch=analytic_arm&amp;year=2050&amp;rollout_launch_probability=0.15&amp;rollout_max_probability=0.55&amp;rollout_takeoff_years=9</code></pre>
                 </article>
               </div>
@@ -580,10 +580,10 @@
                     <tr><td>year</td><td>Projection year, required for population-pyramid</td></tr>
                     <tr><td>threshold_age</td><td>Optional override for threshold and rollout examples</td></tr>
                     <tr><td>threshold_probability</td><td>Optional treated share for threshold examples, from 0.0 to 1.0</td></tr>
-                    <tr><td>rollout_launch_probability</td><td>Optional launch-year annual start chance for rollout examples</td></tr>
-                    <tr><td>rollout_max_probability</td><td>Optional long-run annual start cap for rollout examples</td></tr>
+                    <tr><td>rollout_launch_probability</td><td>Optional launch-year treated share for rollout examples</td></tr>
+                    <tr><td>rollout_max_probability</td><td>Optional long-run treated share for rollout examples</td></tr>
                     <tr><td>rollout_ramp_years</td><td>Optional timing control for linear rollout</td></tr>
-                    <tr><td>rollout_takeoff_years</td><td>Optional timing control for logistic rollout</td></tr>
+                    <tr><td>rollout_takeoff_years</td><td>Optional years-to-plateau control for logistic rollout</td></tr>
                     <tr><td>format</td><td>csv by default; add format=json only if a program needs JSON</td></tr>
                   </tbody>
                 </table>
@@ -607,6 +607,6 @@
       <div class="modal-backdrop" id="exports-modal-backdrop" hidden></div>
     </div>
 
-    <script type="module" src="./app.mjs?v=20260424a"></script>
+    <script type="module" src="./app.mjs?v=20260510a"></script>
   </body>
 </html>

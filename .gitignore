@@ -6,3 +6,4 @@ data/raw/
 data/processed/
 outputs/
 tmp_pdf_text.txt
+test-results/

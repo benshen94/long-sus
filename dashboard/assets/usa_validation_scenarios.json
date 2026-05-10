@@ -349,7 +349,7 @@
         {
             "id": "rollout_threshold_linear",
             "label": "Rollout from age 60 with a linear popularity ramp",
-            "description": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The annual start chance rises linearly from 10% at launch to 50% after 12 years.",
+            "description": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The target treated share rises linearly from 10% at launch to 50% after 12 years.",
             "uptake_mode": "rollout",
             "threshold_age": 60,
             "threshold_probability": 1.0,
@@ -364,7 +364,7 @@
         {
             "id": "rollout_threshold_logistic",
             "label": "Rollout from age 60 with an S-curve popularity ramp",
-            "description": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The annual start chance follows an S-curve, rising from 10% at launch toward 50% with an 8-year takeoff.",
+            "description": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The target treated share follows an S-curve, rising from 10% at launch to 50% after about 8 years.",
             "uptake_mode": "rollout",
             "threshold_age": 60,
             "threshold_probability": 1.0,

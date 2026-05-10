@@ -294,14 +294,42 @@ export function rolloutProbabilityForYear(scenario, year) {
   }
 
   if (scenario.rollout_curve === "logistic") {
-    const takeoffYears = Math.max(1, Number(scenario.rollout_takeoff_years ?? 1));
-    const baseline = 1 / (1 + Math.exp(0.5 * takeoffYears));
-    const current = 1 / (1 + Math.exp(-0.5 * (yearsSinceLaunch - takeoffYears)));
-    const scaled = Math.max(0, Math.min(1, (current - baseline) / (1 - baseline)));
+    const durationYears = Math.max(1, Number(scenario.rollout_takeoff_years ?? 1));
+    const steepness = 12 / durationYears;
+    const midpoint = durationYears / 2;
+    const start = 1 / (1 + Math.exp(steepness * midpoint));
+    const end = 1 / (1 + Math.exp(-steepness * (durationYears - midpoint)));
+    const current = 1 / (1 + Math.exp(-steepness * (yearsSinceLaunch - midpoint)));
+    const scaled = Math.max(0, Math.min(1, (current - start) / (end - start)));
     return launchProbability + ((maxProbability - launchProbability) * scaled);
   }
 
   throw new Error(`Unsupported rollout curve: ${scenario.rollout_curve}`);
+}
+
+
+export function rolloutStartProbabilityForYear(scenario, year) {
+  if (year < scenario.launch_year) {
+    return 0;
+  }
+
+  const targetShare = rolloutProbabilityForYear(scenario, year);
+  if (year === scenario.launch_year) {
+    return targetShare;
+  }
+
+  const previousTargetShare = rolloutProbabilityForYear(scenario, year - 1);
+  const untreatedPreviousShare = 1 - previousTargetShare;
+  if (untreatedPreviousShare <= 0) {
+    return 0;
+  }
+
+  const neededShare = targetShare - previousTargetShare;
+  if (neededShare <= 0) {
+    return 0;
+  }
+
+  return clampedProbability(neededShare / untreatedPreviousShare);
 }
 
 
@@ -336,7 +364,7 @@ function rolloutProbability(age, year, scenario) {
   if (age < scenario.threshold_age) {
     return 0;
   }
-  return rolloutProbabilityForYear(scenario, year);
+  return rolloutStartProbabilityForYear(scenario, year);
 }
 
 
@@ -489,7 +517,7 @@ export function buildLifetimeStartWeights(scenario, startAges) {
         return { weights, untreatedShare: 0 };
       }
 
-      const probability = rolloutProbabilityForYear(scenario, scenario.launch_year + age);
+      const probability = rolloutStartProbabilityForYear(scenario, scenario.launch_year + age);
       const startShare = untreatedShare * probability;
       weights[index] += startShare;
       untreatedShare -= startShare;

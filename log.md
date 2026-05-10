@@ -1,5 +1,34 @@
 # Bug Log
 
+## 2026-05-10
+
+### Rollout used annual start chance instead of target treated share
+
+What the bug was:
+- Rollout parameters labeled as launch and long-run uptake were implemented as repeated annual start probabilities.
+
+What it caused:
+- A setting like 10% to 80% could compound far beyond the intended population share.
+- The dashboard copy made it unclear whether rollout meant adoption chance or treated share.
+
+What we changed:
+- Changed rollout starts to follow a target treated-share path: each year starts only enough untreated eligible people to reach the next target.
+- Kept the once-on-stay-on treatment rule.
+- Updated the dashboard labels and docs to describe launch-year and long-run treated share.
+
+### Dashboard compared active and baseline in the wrong visual order
+
+What the bug was:
+- The left population panel was labeled and rendered as the active scenario, while the untreated UN projection appeared as the comparison.
+
+What it caused:
+- The visual read was backwards: users had to mentally treat the comparison as the vanilla reference and the active scenario as the intervention case.
+
+What we changed:
+- Made the left panel the vanilla UN projection/reference.
+- Made the right panel the active longevity-treatment scenario.
+- Renamed the relevant controls, chart titles, and legends around "UN projection" and "Active treatment".
+
 ## 2026-04-12
 
 ### Migration mode was hard-wired on in the dashboard

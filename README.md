@@ -42,10 +42,10 @@ The public API uses the current internal vocabulary directly.
 - `threshold_probability`: optional override for threshold schemes, from `0.0` to `1.0`
 - `threshold_age`: optional override for threshold and rollout schemes
 - `rollout_curve`: optional override for rollout schemes, `linear` or `logistic`
-- `rollout_launch_probability`: optional rollout launch-year annual start chance, from `0.0` to `1.0`
-- `rollout_max_probability`: optional rollout long-run annual start cap, from `0.0` to `1.0`
+- `rollout_launch_probability`: optional rollout launch-year treated share, from `0.0` to `1.0`
+- `rollout_max_probability`: optional rollout long-run treated share, from `0.0` to `1.0`
 - `rollout_ramp_years`: optional rollout timing control for the linear curve
-- `rollout_takeoff_years`: optional rollout timing control for the logistic curve
+- `rollout_takeoff_years`: optional years-to-plateau control for the logistic curve
 
 ### Treatment scheme
 
@@ -219,7 +219,7 @@ half_take_up = get_population_size(
 
 ### Rollout query with calendar-time popularity growth
 
-This keeps age-based eligibility, but the annual start chance rises after launch as the intervention becomes more common. Eligible untreated people keep getting another yearly chance to start.
+This keeps age-based eligibility, but the target treated share rises after launch as the intervention becomes more common. The model starts enough untreated eligible people each year to reach the next target share. Once someone starts treatment, they stay on treatment.
 
 ```python
 from long_sus import ScenarioQuery, get_population_size

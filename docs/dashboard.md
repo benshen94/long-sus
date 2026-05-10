@@ -71,7 +71,7 @@ $$
 
 - `threshold`: pick one cutoff age and one fixed treated share `p`
 - `banded`: use age bands, each with its own treated share
-- `rollout`: pick one eligibility age, one launch-year annual start chance, and a calendar-time popularity curve that raises the annual start chance after launch
+- `rollout`: pick one eligibility age, one launch-year treated share, and a calendar-time popularity curve that raises the target treated share after launch
 
 ### Start rule inside band
 
@@ -89,13 +89,13 @@ This mode is not a catch-up model. If `p = 0.5`, then half of each cohort starts
 ### Rollout controls
 
 - `eligibility age`: the first age at which someone can start
-- `launch-year annual chance`: the annual start chance for eligible untreated people in the launch year
-- `long-run annual cap`: the upper annual start chance after popularity saturates
+- `launch-year treated share`: the target treated share for eligible people in the launch year
+- `long-run treated share`: the target treated share after popularity saturates
 - `rollout curve`: either `linear` or `logistic`
 - `years to cap`: used by the linear rollout
-- `takeoff year after launch`: used by the logistic rollout
+- `years to plateau`: used by the logistic rollout
 
-Rollout keeps age-based eligibility, but changes the annual start chance over calendar time. This is the dashboard's "drug becomes more popular over time" mode.
+Rollout keeps age-based eligibility, but changes the target treated share over calendar time. This is the dashboard's "drug becomes more popular over time" mode.
 
 For years since launch $y$:
 

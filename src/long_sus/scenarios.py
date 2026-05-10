@@ -107,8 +107,8 @@ def _scheme_description(scheme_id: str) -> str:
         "prescription_bands_equal_probabilities": "Three age bands use fixed treated shares, and starts are spread across ages using the same yearly start chance within each band.",
         "prescription_bands_uniform_start_age": "Three age bands use fixed treated shares, and the yearly start chance is tuned so realized start ages are uniform within each band.",
         "threshold_age_60_all_eligible": "Threshold age 60 with 100% uptake. Everyone already age 60+ starts at launch, and younger cohorts start when they reach age 60.",
-        "rollout_threshold_linear": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The annual start chance rises linearly from 10% at launch to 50% after 12 years.",
-        "rollout_threshold_logistic": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The annual start chance follows an S-curve, rising from 10% at launch toward 50% with an 8-year takeoff.",
+        "rollout_threshold_linear": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The target treated share rises linearly from 10% at launch to 50% after 12 years.",
+        "rollout_threshold_logistic": "Threshold age 60 with once-on adoption that becomes more common over calendar time. The target treated share follows an S-curve, rising from 10% at launch to 50% after about 8 years.",
     }
 
     if scheme_id not in descriptions:

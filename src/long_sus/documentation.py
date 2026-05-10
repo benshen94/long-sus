@@ -338,7 +338,7 @@ The analytic arm uses
 
 - `threshold`: pick one cutoff age and one fixed treated share `p`
 - `banded`: use age bands, each with its own treated share
-- `rollout`: pick one eligibility age, one launch-year annual start chance, and a calendar-time popularity curve that raises the annual start chance after launch
+- `rollout`: pick one eligibility age, one launch-year treated share, and a calendar-time popularity curve that raises the target treated share after launch
 
 ### Start rule inside band
 
@@ -356,13 +356,13 @@ This mode is not a catch-up model. If `p = 0.5`, then half of each cohort starts
 ### Rollout controls
 
 - `eligibility age`: the first age at which someone can start
-- `launch-year annual chance`: the annual start chance for eligible untreated people in the launch year
-- `long-run annual cap`: the upper annual start chance after popularity saturates
+- `launch-year treated share`: the target treated share for eligible people in the launch year
+- `long-run treated share`: the target treated share after popularity saturates
 - `rollout curve`: either `linear` or `logistic`
 - `years to cap`: used by the linear rollout
-- `takeoff year after launch`: used by the logistic rollout
+- `years to plateau`: used by the logistic rollout
 
-Rollout keeps age-based eligibility, but changes the annual start chance over calendar time. This is the dashboard's "drug becomes more popular over time" mode.
+Rollout keeps age-based eligibility, but changes the target treated share over calendar time. This is the dashboard's "drug becomes more popular over time" mode.
 
 For years since launch $y$:
 
@@ -487,8 +487,8 @@ This stage is designed to validate the corrected intervention mechanics before t
 - `elderly` means `65+`.
 - `middle age` means `40-64`.
 - `threshold` means one first-eligibility event with no later catch-up.
-- `rollout` means eligible untreated people keep getting a yearly chance to start, and that yearly chance rises after launch.
-- `rollout_threshold_linear` uses a straight-line ramp from a `10%` launch-year annual chance to a `50%` annual cap over `12` years.
-- `rollout_threshold_logistic` uses the same `10%` to `50%` annual range, but with an S-curve whose takeoff is centered around `8` years after launch.
+- `rollout` means the target treated share among eligible people rises after launch, and the model starts enough untreated eligible people each year to reach that target.
+- `rollout_threshold_linear` uses a straight-line ramp from a `10%` launch-year treated share to a `50%` long-run treated share over `12` years.
+- `rollout_threshold_logistic` uses the same `10%` to `50%` target treated-share range, but with an S-curve that reaches the long-run share after about `8` years.
 """
     path.write_text(text)

@@ -101,10 +101,10 @@ GET /health
 - `threshold_age`: optional override for threshold and rollout scenarios
 - `threshold_probability`: optional override for threshold scenarios
 - `rollout_curve`: optional rollout override, `linear` or `logistic`
-- `rollout_launch_probability`: optional rollout launch-year annual start chance
-- `rollout_max_probability`: optional rollout long-run annual start cap
+- `rollout_launch_probability`: optional rollout launch-year treated share
+- `rollout_max_probability`: optional rollout long-run treated share
 - `rollout_ramp_years`: optional timing control for linear rollout
-- `rollout_takeoff_years`: optional timing control for logistic rollout
+- `rollout_takeoff_years`: optional years-to-plateau control for logistic rollout
 - `source`: `auto`, `catalog`, or `project`
 
 ## Hosting
