@@ -9,8 +9,8 @@ const PRESET_COPY = {
   prescription_bands_equal_probabilities: "Use the paper-style age bands, but spread starts across the band with one constant yearly chance.",
   prescription_bands_uniform_start_age: "Use the paper-style age bands, but tune yearly chances so realized start ages are uniform across the band.",
   threshold_age_60_all_eligible: "Treat 100% of people from age 60 onward. People already 60+ start at launch, and younger cohorts start when they first reach age 60.",
-  rollout_threshold_linear: "Treat people from age 60 onward, but let annual take-up rise over calendar time with a straight-line popularity ramp.",
-  rollout_threshold_logistic: "Treat people from age 60 onward, but let annual take-up follow an S-curve with a slow start, faster middle, and later saturation.",
+  rollout_threshold_linear: "Treat people from age 60 onward, but let the target treated share rise over calendar time with a straight-line popularity ramp.",
+  rollout_threshold_logistic: "Treat people from age 60 onward, but let the target treated share follow an S-curve with a slow start, faster middle, and later saturation.",
 };
 
 const UPTAKE_MODE_COPY = {
@@ -27,7 +27,7 @@ const UPTAKE_MODE_COPY = {
   rollout: {
     title: "Rollout",
     short: "Eligibility by age, adoption by calendar-time popularity.",
-    description: "Rollout keeps one eligibility age, but the target treated share rises after launch as the drug becomes more common. The model starts enough untreated eligible people each year to reach the next target share, and once they start they stay on treatment.",
+    description: "Rollout keeps one eligibility age, but the target treated share rises after launch as the drug becomes more common. New cohorts entering eligibility start at that year's target share. Cohorts already eligible start only enough untreated people to reach the next target share, and once they start they stay on treatment.",
   },
 };
 
@@ -93,9 +93,9 @@ export function describeUptakeMode(mode) {
 
 export function describeRolloutCurve(curve) {
   if (curve === "logistic") {
-    return "Logistic rollout: annual take-up follows an S-curve with a slower start, faster middle, and later saturation.";
+    return "Logistic rollout: target treated share follows an S-curve with a slower start, faster middle, and later saturation.";
   }
-  return "Linear rollout: annual take-up rises in a straight line from the launch-year chance to the long-run cap.";
+  return "Linear rollout: target treated share rises in a straight line from the launch-year share to the long-run share.";
 }
 
 
@@ -352,7 +352,7 @@ export function renderMethodsView(container, context) {
               </div>
               <p class="methods-footnote">${timingNote}</p>
               <ul class="methods-list">
-                <li>Linear rollout: annual take-up rises in a straight line from the launch-year chance to the long-run cap.</li>
+                <li>Linear rollout: target treated share rises in a straight line from the launch-year share to the long-run share.</li>
                 <li>Logistic rollout: target treated share follows an S-curve, slower at first, faster in the middle, then saturating at the selected plateau year.</li>
               </ul>
             </div>

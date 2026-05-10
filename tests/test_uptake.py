@@ -168,9 +168,22 @@ class UptakeTest(unittest.TestCase):
         self.assertTrue(
             math.isclose(
                 start_probability_by_age(scenario, age=60, year=2030, max_age=MAX_AGE),
+                target,
+            )
+        )
+        self.assertTrue(
+            math.isclose(
+                start_probability_by_age(scenario, age=65, year=2030, max_age=MAX_AGE),
                 expected_start_share,
             )
         )
+        self.assertTrue(
+            math.isclose(
+                start_probability_by_age(scenario, age=60, year=2040, max_age=MAX_AGE),
+                0.50,
+            )
+        )
+        self.assertEqual(start_probability_by_age(scenario, age=65, year=2040, max_age=MAX_AGE), 0.0)
 
     def test_rollout_lifetime_weights_follow_calendar_target_share(self) -> None:
         scenario = ScenarioSpec(
@@ -196,6 +209,29 @@ class UptakeTest(unittest.TestCase):
         self.assertTrue(math.isclose(weights[2], 0.20))
         self.assertTrue(math.isclose(weights[3], 0.0))
         self.assertTrue(math.isclose(untreated_share, 0.40))
+
+    def test_rollout_lifetime_weights_use_plateau_for_future_eligible_cohorts(self) -> None:
+        scenario = ScenarioSpec(
+            name="rollout_future_cohort",
+            launch_year=2025,
+            uptake_mode="rollout",
+            threshold_age=60,
+            rollout_curve="linear",
+            rollout_launch_probability=0.10,
+            rollout_max_probability=0.50,
+            rollout_ramp_years=10,
+            target="eta",
+            factor=0.80,
+        )
+
+        weights, untreated_share = build_lifetime_start_weights(
+            scenario=scenario,
+            ages=np.arange(0, MAX_AGE + 1, dtype=int),
+        )
+
+        self.assertTrue(math.isclose(weights[60], 0.50))
+        self.assertTrue(math.isclose(weights[61], 0.0))
+        self.assertTrue(math.isclose(untreated_share, 0.50))
 
     def test_lifetime_weights_for_absolute_bands_leave_untreated_remainder(self) -> None:
         scenario = ScenarioSpec(

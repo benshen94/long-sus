@@ -2,6 +2,21 @@
 
 ## 2026-05-10
 
+### Rollout plateau skipped future cohorts entering eligibility
+
+What the bug was:
+- Rollout used the year-to-year incremental catch-up probability for every eligible age after launch.
+- That same incremental probability was also applied to people who were just reaching the eligibility age for the first time.
+
+What it caused:
+- Once the rollout curve had plateaued, newly eligible cohorts could get a zero start probability instead of the final long-run treated share.
+- A person age 30 in a fully rolled-out threshold-30 scenario could fail to start at the final treated share.
+
+What we changed:
+- Launch-year eligible people and cohorts newly reaching the threshold age now start at that calendar year's target treated share.
+- Cohorts that were already eligible in prior years still use only the incremental catch-up probability needed to move from the previous target share to the current one.
+- Updated Python, dashboard JavaScript, tests, and dashboard copy to make this distinction explicit.
+
 ### Rollout used annual start chance instead of target treated share
 
 What the bug was:

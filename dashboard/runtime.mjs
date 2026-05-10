@@ -333,6 +333,26 @@ export function rolloutStartProbabilityForYear(scenario, year) {
 }
 
 
+export function rolloutStartProbabilityForAgeYear(scenario, age, year) {
+  if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
+    return 0;
+  }
+  if (year < scenario.launch_year) {
+    return 0;
+  }
+  if (age < scenario.threshold_age) {
+    return 0;
+  }
+  if (year === scenario.launch_year) {
+    return rolloutProbabilityForYear(scenario, year);
+  }
+  if (age === scenario.threshold_age) {
+    return rolloutProbabilityForYear(scenario, year);
+  }
+  return rolloutStartProbabilityForYear(scenario, year);
+}
+
+
 function thresholdProbability(age, year, scenario) {
   const probability = clampedProbability(scenario.threshold_probability ?? 1);
   if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
@@ -355,16 +375,7 @@ function thresholdProbability(age, year, scenario) {
 
 
 function rolloutProbability(age, year, scenario) {
-  if (scenario.threshold_age === null || scenario.threshold_age === undefined) {
-    return 0;
-  }
-  if (year < scenario.launch_year) {
-    return 0;
-  }
-  if (age < scenario.threshold_age) {
-    return 0;
-  }
-  return rolloutStartProbabilityForYear(scenario, year);
+  return rolloutStartProbabilityForAgeYear(scenario, age, year);
 }
 
 
@@ -517,7 +528,7 @@ export function buildLifetimeStartWeights(scenario, startAges) {
         return { weights, untreatedShare: 0 };
       }
 
-      const probability = rolloutStartProbabilityForYear(scenario, scenario.launch_year + age);
+      const probability = rolloutStartProbabilityForAgeYear(scenario, age, scenario.launch_year + age);
       const startShare = untreatedShare * probability;
       weights[index] += startShare;
       untreatedShare -= startShare;

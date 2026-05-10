@@ -76,6 +76,24 @@ def rollout_start_probability_for_year(
     return _clamped_probability(needed_share / untreated_previous_share)
 
 
+def rollout_start_probability_for_age_year(
+    scenario: ScenarioSpec,
+    age: int,
+    year: int,
+) -> float:
+    if scenario.threshold_age is None:
+        return 0.0
+    if year < scenario.launch_year:
+        return 0.0
+    if age < scenario.threshold_age:
+        return 0.0
+    if year == scenario.launch_year:
+        return rollout_probability_for_year(scenario, year)
+    if age == scenario.threshold_age:
+        return rollout_probability_for_year(scenario, year)
+    return rollout_start_probability_for_year(scenario, year)
+
+
 def resolve_age_bands(
     bands: tuple[AgeBandUptake, ...],
     max_age: int,
@@ -123,13 +141,7 @@ def _threshold_probability(age: int, year: int, scenario: ScenarioSpec) -> float
 
 
 def _rollout_probability(age: int, year: int, scenario: ScenarioSpec) -> float:
-    if scenario.threshold_age is None:
-        return 0.0
-    if year < scenario.launch_year:
-        return 0.0
-    if age < scenario.threshold_age:
-        return 0.0
-    return rollout_start_probability_for_year(scenario, year)
+    return rollout_start_probability_for_age_year(scenario, age, year)
 
 
 def _absolute_probability(age: int, year: int, scenario: ScenarioSpec, band: ResolvedBand) -> float:
@@ -264,7 +276,7 @@ def build_lifetime_start_weights(
                 return weights, 0.0
 
             year = scenario.launch_year + age
-            probability = rollout_start_probability_for_year(scenario, year)
+            probability = rollout_start_probability_for_age_year(scenario, age, year)
             start_share = untreated_share * probability
             weights[age] += start_share
             untreated_share -= start_share
